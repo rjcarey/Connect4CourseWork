@@ -23,6 +23,58 @@ class game:
     @property
     def getPlayer(self):
         return self._Player
+    
+    @property
+    def getWinner(self):
+        winner = None
+        #check horizontal
+        player = " "
+        for row in self._Board:
+            run = 0
+            for col in row:
+                if col == player:
+                    run += 1
+                    if run == 4 and player != " ":
+                        return player
+                else:
+                    player = col
+                    run = 1
+                    
+        #check vertical
+        player = " "
+        for column in range(7):
+            run = 0
+            for row in range(6):
+                if self._Board[row][column] == player:
+                    run += 1
+                    if run == 4 and player != " ":
+                        return player
+                else:
+                    player = self._Board[row][column]
+                    run = 1
+        
+        #check diagonal
+        player = " "
+        for rowNum, row in enumerate(self._Board):
+            for colNum, col in enumerate(row):
+                if col != " ":
+                    # \ diagonal
+                    if colNum < 4 and rowNum < 3:
+                        counterOne = self._Board[rowNum][colNum]
+                        counterTwo = self._Board[rowNum + 1][colNum + 1]
+                        counterThree = self._Board[rowNum + 2][colNum + 2]
+                        counterFour = self._Board[rowNum + 3][colNum + 3]
+                        if counterOne == counterTwo == counterThree == counterFour:
+                            return col
+                    # / diagonal
+                    if colNum > 2 and rowNum < 3:
+                        counterOne = self._Board[rowNum][colNum]
+                        counterTwo = self._Board[rowNum + 1][colNum - 1]
+                        counterThree = self._Board[rowNum + 2][colNum - 2]
+                        counterFour = self._Board[rowNum + 3][colNum - 3]
+                        if counterOne == counterTwo == counterThree == counterFour:
+                            return col 
+        return winner
 
     def play(self, column):
         col = column - 1

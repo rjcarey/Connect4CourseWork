@@ -18,12 +18,11 @@ class terminal(ui):
         self._Game = game()
 
     def run(self):
-        print(self._Game)
-        print(f"{self._Game.getPlayer} to play...")
-        
-        while True:
-            column = int(input("Enter column number to drop counter: "))
-            self._Game.play(column)
+        while not self._Game.getWinner:
             print(self._Game)
             print(f"{self._Game.getPlayer} to play...")
+            column = int(input("Enter column number to drop counter: "))
+            self._Game.play(column)
+        print(self._Game)
+        print(f"{self._Game.getWinner} has won, well played!")
         
