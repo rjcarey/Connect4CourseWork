@@ -20,3 +20,5 @@ class terminal(ui):
     def run(self):
         print(self._Game)
         print(f"{self._Game.getPlayer} to play...")
+        column = int(input("Enter column number to drop counter: "))
+        
