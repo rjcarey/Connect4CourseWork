@@ -1,3 +1,4 @@
+from ui import terminal, gui
 from sys import argv
 
 def usage():   
@@ -11,10 +12,14 @@ t : play with the Terminal""")
 if __name__ == "__main__":
     if len(argv) == 2:
         if argv[1] == "t":
-            print("initialising terminal mode...")
+            print("initialising terminal mode...\n")
+            ui = terminal()
         elif argv[1] == "g":
-            print("initialising gui mode...")
+            print("initialising gui mode...\n")
+            ui = gui()
         else:
             usage()
     else:
         usage()
+
+    ui.run()
