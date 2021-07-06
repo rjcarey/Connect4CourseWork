@@ -1,3 +1,6 @@
+class gameError(Exception):
+    pass
+
 class game:
     
     PONE = "❂"
@@ -86,6 +89,8 @@ class game:
 
     def play(self, column):
         col = column - 1
+        if self._Board[0][col] != " ":
+            raise gameError
         for row in reversed(self._Board):
             if row[col] == " ":
                 row[col] = self._Player
