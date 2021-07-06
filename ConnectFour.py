@@ -1,13 +1,15 @@
 from ui import terminal, gui
 from sys import argv
 
-def usage():   
+
+def usage():
     print(f"""
 Error: Incorrect run command
 Command: ConnectFour.py [g | t]
 g : play with the GUI
 t : play with the Terminal""")
     quit()
+
 
 if __name__ == "__main__":
     if len(argv) == 2:
@@ -26,7 +28,7 @@ if __name__ == "__main__":
     if argv[1] == "t":
         while True:
             choice = " "
-            while choice != "y" and choice !="n":
+            while choice != "y" and choice != "n":
                 try:
                     choice = input("y: Play Again\nn: Quit\nEnter [y|n]: ")
                     if choice != "y" and choice != "n":

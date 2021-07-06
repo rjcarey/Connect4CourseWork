@@ -1,6 +1,7 @@
 class gameError(Exception):
     pass
 
+
 class game:
     
     PONE = "❂"
@@ -30,7 +31,7 @@ class game:
     @property
     def getWinner(self):
         winner = None
-        #check horizontal
+        # check horizontal
         player = " "
         for row in self._Board:
             run = 0
@@ -43,7 +44,7 @@ class game:
                     player = col
                     run = 1
                     
-        #check vertical
+        # check vertical
         player = " "
         for column in range(7):
             run = 0
@@ -56,7 +57,7 @@ class game:
                     player = self._Board[row][column]
                     run = 1
         
-        #check diagonal
+        # check diagonal
         player = " "
         for rowNum, row in enumerate(self._Board):
             for colNum, col in enumerate(row):
@@ -78,7 +79,7 @@ class game:
                         counterFour = self._Board[rowNum + 3][colNum - 3]
                         if counterOne == counterTwo == counterThree == counterFour:
                             return col 
-        #check draw
+        # check draw
         occupiedCount = 0
         for row in self._Board:
             for col in row:
@@ -97,6 +98,7 @@ class game:
                 row[col] = self._Player
                 break
         self._Player = game.PTWO if self._Player == game.PONE else game.PONE
+
 
 if __name__ == "__main__":
     pass

@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
-from tkinter import Tk, Frame, Button, X
-from game import game
+from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar
+from game import game, gameError
+
 
 class ui(ABC):
     @abstractmethod
     def run(self):
         raise NotImplementedError
+
 
 class gui(ui):
     def __init__(self):
@@ -15,21 +17,62 @@ class gui(ui):
         frame.pack()
         self.__root = root
         
-        Button(frame, text= "Help", command= self._help).pack(fill=X)
-        Button(frame, text= "Play", command= self._play).pack(fill=X)
-        Button(frame, text= "Quit", command= self._quit).pack(fill=X)
+        Button(frame, text="Help", command=self._help).pack(fill=X)
+        Button(frame, text="Play", command=self._play).pack(fill=X)
+        Button(frame, text="Quit", command=self._quit).pack(fill=X)
         
     def _help(self):
         pass
     
     def _play(self):
+        self.__game = game()
+        gameWin = Toplevel(self.__root)
+        gameWin.title("Game")
+        frame = Frame(gameWin)
+        self.__gameWin = gameWin
+
+        Grid.columnconfigure(gameWin, 0, weight=1)
+        Grid.rowconfigure(gameWin, 0, weight=1)
+        frame.grid(row=0, column=0, sticky=N+S+W+E)
+
+        board = Canvas(gameWin, width=700, height=600, bg='blue')
+        baseX1 = 10
+        baseY1 = 10
+        baseX2 = 90
+        baseY2 = 90
+        step = 100
+        self.__spaces = [[None for _ in range(7)] for _ in range(6)]
+        for row in range(6):
+            for column in range(7):
+                # create white circle on blue background
+                oval = board.create_oval(baseX1 + (column*step), baseY1 + (row*step), baseX2 + (column*step), baseY2 + (row*step), fill="white")#, dash=(7,1,1,1)
+                self.__spaces[row][column] = oval
+        board.grid(row=1, column=0, sticky=N+S+W+E)
+        self.__canvas = board
+        Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=2, column=0, sticky=N+S+W+E)
+
+        for col in range(7):
+            t = StringVar()
+            t.set(col + 1)
+            cmd = lambda c=col: self.__playMove(c)
+            Button(frame, textvariable=t, command=cmd).grid(row=0, column=col, sticky=N+S+W+E)
+
+        # resizing
+        for col in range(7):
+            Grid.columnconfigure(frame, col, weight=1)
+
+    def __playMove(self, col):
         pass
-    
+
+    def _dismissGame(self):
+        pass
+
     def _quit(self):
         self.__root.quit()
         
     def run(self):
         self.__root.mainloop()
+
 
 class terminal(ui):
     def __init__(self):
@@ -39,17 +82,17 @@ class terminal(ui):
         while not self._Game.getWinner:
             print(self._Game)
             print(f"{self._Game.getPlayer} to play...")
-            #type check
+            # type check
             try:
                 column = int(input("Enter column number to drop counter: "))
             except ValueError:
                 print("\n\n\n\nERROR: invalid input: expected integer")
                 continue
-            #range check
+            # range check
             if 1 <= column <= 7:
                 try:
                     self._Game.play(column)
-                except:
+                except gameError:
                     print("\n\n\n\nERROR: column full")
             else:
                 print("\n\n\n\nERROR: input must be between 1 and 7 inclusive")
