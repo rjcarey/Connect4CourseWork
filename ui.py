@@ -26,7 +26,7 @@ class gui(ui):
         pass
     
     def _quit(self):
-        pass
+        self.__root.quit()
         
     def run(self):
         self.__root.mainloop()
