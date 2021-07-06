@@ -69,6 +69,7 @@ class game:
                         counterFour = self._Board[rowNum + 3][colNum + 3]
                         if counterOne == counterTwo == counterThree == counterFour:
                             return col
+                        
                     # / diagonal
                     if colNum > 2 and rowNum < 3:
                         counterOne = self._Board[rowNum][colNum]
