@@ -24,5 +24,9 @@ class terminal(ui):
             column = int(input("Enter column number to drop counter: "))
             self._Game.play(column)
         print(self._Game)
-        print(f"{self._Game.getWinner} has won, well played!")
+        winner = self._Game.getWinner
+        if winner == "Draw":
+            print("The game was a draw!")
+        else:
+            print(f"{winner} has won, well played!")
         

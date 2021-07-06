@@ -74,6 +74,14 @@ class game:
                         counterFour = self._Board[rowNum + 3][colNum - 3]
                         if counterOne == counterTwo == counterThree == counterFour:
                             return col 
+        #check draw
+        occupiedCount = 0
+        for row in self._Board:
+            for col in row:
+                if col != " ":
+                    occupiedCount += 1
+        if occupiedCount == 42:
+            return "Draw"
         return winner
 
     def play(self, column):
