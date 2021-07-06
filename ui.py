@@ -15,9 +15,9 @@ class gui(ui):
         frame.pack()
         self.__root = root
         
-        Button(frame, text= "Help", command= self._help).pack(fill=X, expand=True)
-        Button(frame, text= "Play", command= self._play).pack(fill=X, expand=True)
-        Button(frame, text= "Quit", command= self._quit).pack(fill=X, expand=True)
+        Button(frame, text= "Help", command= self._help).pack(fill=X)
+        Button(frame, text= "Play", command= self._play).pack(fill=X)
+        Button(frame, text= "Quit", command= self._quit).pack(fill=X)
         
     def _help(self):
         pass
