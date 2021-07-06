@@ -23,3 +23,17 @@ if __name__ == "__main__":
         usage()
 
     ui.run()
+    while True:
+        choice = " "
+        while choice != "y" and choice !="n":
+            try:
+                choice = input("y: Play Again\nn: Quit\nEnter [y|n]: ")
+                if choice != "y" and choice != "n":
+                    raise ValueError
+            except ValueError:
+                print("\n\n\n\nERROR: enter 'y' or 'n'")
+                continue
+        if choice == "n":
+            break
+        ui = terminal()
+        ui.run()

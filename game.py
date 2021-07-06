@@ -95,7 +95,7 @@ class game:
             if row[col] == " ":
                 row[col] = self._Player
                 break
-        self._Player = game.PTWO if self._Player == game.PONE else game.PONE            
+        self._Player = game.PTWO if self._Player == game.PONE else game.PONE
 
 if __name__ == "__main__":
     pass

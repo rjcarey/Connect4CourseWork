@@ -41,4 +41,3 @@ class terminal(ui):
             print("The game was a draw!")
         else:
             print(f"{winner} has won, well played!")
-        
