@@ -93,11 +93,13 @@ class game:
         col = column - 1
         if self._Board[0][col] != " ":
             raise gameError
-        for row in reversed(self._Board):
+        for i, row in enumerate(reversed(self._Board)):
             if row[col] == " ":
                 row[col] = self._Player
+                playedRow = i
                 break
         self._Player = game.PTWO if self._Player == game.PONE else game.PONE
+        return playedRow
 
 
 if __name__ == "__main__":

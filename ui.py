@@ -62,7 +62,12 @@ class gui(ui):
             Grid.columnconfigure(frame, col, weight=1)
 
     def __playMove(self, col):
-        pass
+        try:
+            row = 5 - self.__game.play(col + 1)
+            counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
+            self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+        except gameError:
+            pass
 
     def _dismissGame(self):
         self.__gameWin.destroy()
