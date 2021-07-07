@@ -63,8 +63,8 @@ class gui(ui):
 
     def __playMove(self, col):
         try:
-            row = 5 - self.__game.play(col + 1)
             counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
+            row = 5 - self.__game.play(col + 1)
             self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
         except gameError:
             pass
