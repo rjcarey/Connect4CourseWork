@@ -92,7 +92,7 @@ class game:
     def play(self, column):
         col = column - 1
         if self._Board[0][col] != " ":
-            raise gameError
+            raise gameError("ERROR: column full, play again...")
         for i, row in enumerate(reversed(self._Board)):
             if row[col] == " ":
                 row[col] = self._Player

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label
+from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS
 from game import game, gameError
 
 
@@ -77,8 +77,10 @@ class gui(ui):
             self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
             counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
             self.__playerTurn.set(f'{counter} to play')
-        except gameError:
-            pass
+        except gameError as e:
+            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
+            if self.__gameConsole.size() > 5:
+                self.__gameConsole.yview_scroll(1, UNITS)
 
     def _dismissGame(self):
         self.__gameWin.destroy()
