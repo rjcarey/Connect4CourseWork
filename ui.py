@@ -65,7 +65,7 @@ class gui(ui):
         pass
 
     def _dismissGame(self):
-        pass
+        self.__gameWin.destroy()
 
     def _quit(self):
         self.__root.quit()
