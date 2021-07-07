@@ -82,12 +82,17 @@ class gui(ui):
                 self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
                 if self.__gameConsole.size() > 5:
                     self.__gameConsole.yview_scroll(1, UNITS)
-            if self.__game.getWinner:
+
+            winningPlayer, run = self.__game.getRun
+            if winningPlayer:
                 winner = 'red' if self.__game.getWinner == game.PONE else 'yellow'
                 message = f"{winner} has won, well played!" if self.__game.getWinner != "Draw" else "The game was a draw!"
                 self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {message}")
                 if self.__gameConsole.size() > 5:
                     self.__gameConsole.yview_scroll(1, UNITS)
+
+                #highlight winnin run
+                #if
 
     def _dismissGame(self):
         self.__gameWin.destroy()

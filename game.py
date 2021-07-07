@@ -27,38 +27,42 @@ class game:
     @property
     def getPlayer(self):
         return self._Player
-    
+
     @property
-    def getWinner(self):
-        winner = None
+    def getRun(self):
         # check horizontal
         player = " "
-        for row in self._Board:
+        counters = []
+        for ir, row in enumerate(self._Board):
             run = 0
-            for col in row:
+            for ic, col in enumerate(row):
                 if col == player:
                     run += 1
+                    counters.append((ir, ic))
                     if run == 4 and player != " ":
-                        return player
+                        return player, counters
                 else:
                     player = col
+                    counters = [(ir, ic)]
                     run = 1
-                    
+
         # check vertical
         player = " "
+        counters = []
         for column in range(7):
             run = 0
             for row in range(6):
                 if self._Board[row][column] == player:
                     run += 1
+                    counters.append((row, column))
                     if run == 4 and player != " ":
-                        return player
+                        return player, counters
                 else:
                     player = self._Board[row][column]
+                    counters = [(row, column)]
                     run = 1
-        
+
         # check diagonal
-        player = " "
         for rowNum, row in enumerate(self._Board):
             for colNum, col in enumerate(row):
                 if col != " ":
@@ -69,8 +73,8 @@ class game:
                         counterThree = self._Board[rowNum + 2][colNum + 2]
                         counterFour = self._Board[rowNum + 3][colNum + 3]
                         if counterOne == counterTwo == counterThree == counterFour:
-                            return col
-                        
+                            return col, [(rowNum, colNum), (rowNum + 1, colNum + 1), (rowNum + 2, colNum + 2), (rowNum + 3, colNum + 3)]
+
                     # / diagonal
                     if colNum > 2 and rowNum < 3:
                         counterOne = self._Board[rowNum][colNum]
@@ -78,7 +82,7 @@ class game:
                         counterThree = self._Board[rowNum + 2][colNum - 2]
                         counterFour = self._Board[rowNum + 3][colNum - 3]
                         if counterOne == counterTwo == counterThree == counterFour:
-                            return col 
+                            return col, [(rowNum, colNum), (rowNum + 1, colNum - 1), (rowNum + 2, colNum - 2), (rowNum + 3, colNum - 3)]
         # check draw
         occupiedCount = 0
         for row in self._Board:
@@ -86,7 +90,12 @@ class game:
                 if col != " ":
                     occupiedCount += 1
         if occupiedCount == 42:
-            return "Draw"
+            return "Draw", []
+        return None, []
+
+    @property
+    def getWinner(self):
+        winner, run = self.getRun
         return winner
 
     def play(self, column):
