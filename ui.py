@@ -71,16 +71,23 @@ class gui(ui):
             Grid.columnconfigure(frame, col, weight=1)
 
     def __playMove(self, col):
-        try:
-            counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
-            row = 5 - self.__game.play(col + 1)
-            self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
-            counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
-            self.__playerTurn.set(f'{counter} to play')
-        except gameError as e:
-            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
-            if self.__gameConsole.size() > 5:
-                self.__gameConsole.yview_scroll(1, UNITS)
+        if not self.__game.getWinner:
+            try:
+                counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
+                row = 5 - self.__game.play(col + 1)
+                self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+                counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
+                self.__playerTurn.set(f'{counter} to play')
+            except gameError as e:
+                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
+                if self.__gameConsole.size() > 5:
+                    self.__gameConsole.yview_scroll(1, UNITS)
+            if self.__game.getWinner:
+                winner = 'red' if self.__game.getWinner == game.PONE else 'yellow'
+                message = f"{winner} has won, well played!" if self.__game.getWinner != "Draw" else "The game was a draw!"
+                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {message}")
+                if self.__gameConsole.size() > 5:
+                    self.__gameConsole.yview_scroll(1, UNITS)
 
     def _dismissGame(self):
         self.__gameWin.destroy()
