@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar
+from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label
 from game import game, gameError
 
 
@@ -47,9 +47,18 @@ class gui(ui):
                 # create white circle on blue background
                 oval = board.create_oval(baseX1 + (column*step), baseY1 + (row*step), baseX2 + (column*step), baseY2 + (row*step), fill="white")#, dash=(7,1,1,1)
                 self.__spaces[row][column] = oval
-        board.grid(row=1, column=0, sticky=N+S+W+E)
+        board.grid(row=1, column=0)
         self.__canvas = board
-        Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=2, column=0, sticky=N+S+W+E)
+
+        console = Listbox(frame, height=5)
+        console.grid(row=2, column=0, columnspan=4, sticky=E+W)
+        self.__gameConsole = console
+
+        self.__playerTurn = StringVar()
+        self.__playerTurn.set('red to play')
+        Label(frame, textvariable=self.__playerTurn, bg='gray').grid(row=2, column=4, columnspan=3, sticky=N+S+E+W)
+
+        Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=3, column=0, sticky=N+S+W+E)
 
         for col in range(7):
             t = StringVar()
@@ -66,6 +75,8 @@ class gui(ui):
             counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
             row = 5 - self.__game.play(col + 1)
             self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+            counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
+            self.__playerTurn.set(f'{counter} to play')
         except gameError:
             pass
 
