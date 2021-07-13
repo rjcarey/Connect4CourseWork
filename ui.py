@@ -16,6 +16,7 @@ class gui(ui):
         frame = Frame(root)
         frame.pack()
         self.__root = root
+        self.__gameInProgress = False
         
         Button(frame, text="Help", command=self._help).pack(fill=X)
         Button(frame, text="Play", command=self._play).pack(fill=X)
@@ -25,61 +26,68 @@ class gui(ui):
         pass
     
     def _play(self):
-        self.__game = game()
-        gameWin = Toplevel(self.__root)
-        gameWin.title("Game")
-        frame = Frame(gameWin)
-        self.__gameWin = gameWin
+        if not self.__gameInProgress:
+            self.__gameInProgress = True
+            self.__game = game()
+            gameWin = Toplevel(self.__root)
+            gameWin.title("Game")
+            frame = Frame(gameWin)
+            self.__gameWin = gameWin
 
-        Grid.columnconfigure(gameWin, 0, weight=1)
-        Grid.rowconfigure(gameWin, 0, weight=1)
-        frame.grid(row=0, column=0, sticky=N + S + W + E)
+            Grid.columnconfigure(gameWin, 0, weight=1)
+            Grid.rowconfigure(gameWin, 0, weight=1)
+            frame.grid(row=0, column=0, sticky=N + S + W + E)
 
-        #console
-        console = Listbox(frame, height=3)
-        console.grid(row=0, column=0, columnspan=4, sticky=E + W)
-        self.__gameConsole = console
+            #console
+            console = Listbox(frame, height=3)
+            console.grid(row=0, column=0, columnspan=4, sticky=E + W)
+            self.__gameConsole = console
 
-        #player turn label
-        self.__playerTurn = StringVar()
-        self.__playerTurn.set('RED TO PLAY\nCHOOSE COLUMN')
-        Label(frame, textvariable=self.__playerTurn, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
+            #player turn label
+            self.__playerTurn = StringVar()
+            self.__playerTurn.set('RED TO PLAY\nCHOOSE COLUMN')
+            Label(frame, textvariable=self.__playerTurn, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
 
-        #board
-        #Change tile to change board size
-        #minTile = 40
-        #maxTile = 115
-        tile = 40
-        counterSize = tile * 0.8
-        boardWidth = 7 * tile
-        boardHeight = 6 * tile
-        board = Canvas(gameWin, width=boardWidth, height=boardHeight, bg='blue')
-        baseX1 = tile / 10
-        baseY1 = tile / 10
-        baseX2 = baseX1 + counterSize
-        baseY2 =baseY1 + counterSize
-        self.__spaces = [[None for _ in range(7)] for _ in range(6)]
-        for row in range(6):
-            for column in range(7):
-                # create white circles on blue background
-                oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill="white")#, dash=(7,1,1,1)
-                self.__spaces[row][column] = oval
-        board.grid(row=1, column=0)
-        self.__canvas = board
+            #board
+            #Change tile to change board size
+            winWidth =  self.__gameWin.winfo_screenwidth()
+            if winWidth < 40:
+                #min board tile size
+                winWidth = 40
+            elif winWidth > 115:
+                #max board tile size
+                winWidth = 115
+            tile = winWidth
+            counterSize = tile * 0.8
+            boardWidth = 7 * tile
+            boardHeight = 6 * tile
+            board = Canvas(gameWin, width=boardWidth, height=boardHeight, bg='blue')
+            baseX1 = tile / 10
+            baseY1 = tile / 10
+            baseX2 = baseX1 + counterSize
+            baseY2 =baseY1 + counterSize
+            self.__spaces = [[None for _ in range(7)] for _ in range(6)]
+            for row in range(6):
+                for column in range(7):
+                    # create white circles on blue background
+                    oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill="white")#, dash=(7,1,1,1)
+                    self.__spaces[row][column] = oval
+            board.grid(row=1, column=0)
+            self.__canvas = board
 
-        #dismiss button
-        Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=3, column=0, sticky=N+S+W+E)
+            #dismiss button
+            Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=3, column=0, sticky=N+S+W+E)
 
-        #column buttons
-        for col in range(7):
-            t = StringVar()
-            t.set(col + 1)
-            cmd = lambda c=col: self.__playMove(c)
-            Button(frame, textvariable=t, command=cmd).grid(row=1, column=col, sticky=N+S+W+E)
+            #column buttons
+            for col in range(7):
+                t = StringVar()
+                t.set(col + 1)
+                cmd = lambda c=col: self.__playMove(c)
+                Button(frame, textvariable=t, command=cmd).grid(row=1, column=col, sticky=N+S+W+E)
 
-        # resizing
-        for col in range(7):
-            Grid.columnconfigure(frame, col, weight=1)
+            # resizing
+            for col in range(7):
+                Grid.columnconfigure(frame, col, weight=1)
 
     def __playMove(self, col):
         if not self.__game.getWinner:
@@ -111,6 +119,7 @@ class gui(ui):
 
     def _dismissGame(self):
         self.__gameWin.destroy()
+        self.__gameInProgress = False
 
     def _quit(self):
         self.__root.quit()
