@@ -23,7 +23,17 @@ class gui(ui):
         Button(frame, text="Quit", command=self._quit).pack(fill=X)
         
     def _help(self):
-        pass
+        helpWin = Toplevel(self.__root)
+        helpWin.title("Help")
+        frame = Frame(helpWin)
+        frame.pack()
+        self.__helpWin = helpWin
+        #rule display
+        Label(frame, text="Take it in turns to  drop counters into the board.").pack()
+        Label(frame, text="First person to get a vertical, horizontal or diagonal run of four counters wins!").pack()
+        Label(frame, text="If the board fills and nobody has a run of four yet then the game is drawn.").pack()
+        #dismiss button
+        Button(frame, text="Dismiss", command=self._dismissHelp).pack()
     
     def _play(self):
         if not self.__gameInProgress:
@@ -120,6 +130,9 @@ class gui(ui):
     def _dismissGame(self):
         self.__gameWin.destroy()
         self.__gameInProgress = False
+
+    def _dismissHelp(self):
+        pass
 
     def _quit(self):
         self.__root.quit()
