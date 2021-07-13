@@ -73,7 +73,7 @@ class gui(ui):
     def __playMove(self, col):
         if not self.__game.getWinner:
             try:
-                counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
+                counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
                 row = 5 - self.__game.play(col + 1)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
                 counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
@@ -92,7 +92,11 @@ class gui(ui):
                     self.__gameConsole.yview_scroll(1, UNITS)
 
                 #highlight winnin run
-                #if
+                if run:
+                    counter = "#ff9999" if winningPlayer == game.PONE else "#ffffb3"
+                    for row, col in run:
+                        self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+
 
     def _dismissGame(self):
         self.__gameWin.destroy()
