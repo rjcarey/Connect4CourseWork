@@ -36,27 +36,33 @@ class gui(ui):
         frame.grid(row=0, column=0, sticky=N + S + W + E)
 
         #console
-        console = Listbox(frame, height=5)
+        console = Listbox(frame, height=3)
         console.grid(row=0, column=0, columnspan=4, sticky=E + W)
         self.__gameConsole = console
 
         #player turn label
         self.__playerTurn = StringVar()
-        self.__playerTurn.set('red to play')
+        self.__playerTurn.set('RED TO PLAY\nCHOOSE COLUMN')
         Label(frame, textvariable=self.__playerTurn, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
 
         #board
-        board = Canvas(gameWin, width=700, height=600, bg='blue')
-        baseX1 = 10
-        baseY1 = 10
-        baseX2 = 90
-        baseY2 = 90
-        step = 100
+        #Change tile to change board size
+        #minTile = 40
+        #maxTile = 115
+        tile = 40
+        counterSize = tile * 0.8
+        boardWidth = 7 * tile
+        boardHeight = 6 * tile
+        board = Canvas(gameWin, width=boardWidth, height=boardHeight, bg='blue')
+        baseX1 = tile / 10
+        baseY1 = tile / 10
+        baseX2 = baseX1 + counterSize
+        baseY2 =baseY1 + counterSize
         self.__spaces = [[None for _ in range(7)] for _ in range(6)]
         for row in range(6):
             for column in range(7):
-                # create white circle on blue background
-                oval = board.create_oval(baseX1 + (column*step), baseY1 + (row*step), baseX2 + (column*step), baseY2 + (row*step), fill="white")#, dash=(7,1,1,1)
+                # create white circles on blue background
+                oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill="white")#, dash=(7,1,1,1)
                 self.__spaces[row][column] = oval
         board.grid(row=1, column=0)
         self.__canvas = board
@@ -81,22 +87,22 @@ class gui(ui):
                 counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
                 row = 5 - self.__game.play(col + 1)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
-                counter = 'red' if self.__game.getPlayer == game.PONE else 'yellow'
-                self.__playerTurn.set(f'{counter} to play')
+                counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
             except gameError as e:
                 self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
-                if self.__gameConsole.size() > 5:
+                if self.__gameConsole.size() > 3:
                     self.__gameConsole.yview_scroll(1, UNITS)
 
             winningPlayer, run = self.__game.getRun
             if winningPlayer:
-                winner = 'red' if self.__game.getWinner == game.PONE else 'yellow'
-                message = f"{winner} has won, well played!" if self.__game.getWinner != "Draw" else "The game was a draw!"
-                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {message}")
-                if self.__gameConsole.size() > 5:
-                    self.__gameConsole.yview_scroll(1, UNITS)
+                if self.__game.getWinner != "Draw":
+                    winner = 'RED' if self.__game.getWinner == game.PONE else 'YELLOW'
+                    self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
+                else:
+                    self.__playerTurn.set(f'THE GAME WAS DRAWN')
 
-                #highlight winnin run
+                #highlight winning run
                 if run:
                     counter = "#ff9999" if winningPlayer == game.PONE else "#ffffb3"
                     for row, col in run:
