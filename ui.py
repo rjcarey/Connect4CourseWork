@@ -132,7 +132,7 @@ class gui(ui):
         self.__gameInProgress = False
 
     def _dismissHelp(self):
-        pass
+        self.__helpWin.destroy()
 
     def _quit(self):
         self.__root.quit()
