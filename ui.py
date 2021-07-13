@@ -33,8 +33,19 @@ class gui(ui):
 
         Grid.columnconfigure(gameWin, 0, weight=1)
         Grid.rowconfigure(gameWin, 0, weight=1)
-        frame.grid(row=0, column=0, sticky=N+S+W+E)
+        frame.grid(row=0, column=0, sticky=N + S + W + E)
 
+        #console
+        console = Listbox(frame, height=5)
+        console.grid(row=0, column=0, columnspan=4, sticky=E + W)
+        self.__gameConsole = console
+
+        #player turn label
+        self.__playerTurn = StringVar()
+        self.__playerTurn.set('red to play')
+        Label(frame, textvariable=self.__playerTurn, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
+
+        #board
         board = Canvas(gameWin, width=700, height=600, bg='blue')
         baseX1 = 10
         baseY1 = 10
@@ -50,21 +61,15 @@ class gui(ui):
         board.grid(row=1, column=0)
         self.__canvas = board
 
-        console = Listbox(frame, height=5)
-        console.grid(row=2, column=0, columnspan=4, sticky=E+W)
-        self.__gameConsole = console
-
-        self.__playerTurn = StringVar()
-        self.__playerTurn.set('red to play')
-        Label(frame, textvariable=self.__playerTurn, bg='gray').grid(row=2, column=4, columnspan=3, sticky=N+S+E+W)
-
+        #dismiss button
         Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=3, column=0, sticky=N+S+W+E)
 
+        #column buttons
         for col in range(7):
             t = StringVar()
             t.set(col + 1)
             cmd = lambda c=col: self.__playMove(c)
-            Button(frame, textvariable=t, command=cmd).grid(row=0, column=col, sticky=N+S+W+E)
+            Button(frame, textvariable=t, command=cmd).grid(row=1, column=col, sticky=N+S+W+E)
 
         # resizing
         for col in range(7):
