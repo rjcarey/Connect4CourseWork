@@ -149,7 +149,10 @@ class gui(ui):
                 Grid.columnconfigure(frame, col, weight=1)
 
     def _undoMove(self):
-        pass
+        row, col = self.__game.undo()
+        self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
+        counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+        self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
 
     def __playMove(self, col):
         if not self.__game.getWinner:

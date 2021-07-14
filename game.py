@@ -3,13 +3,15 @@ class gameError(Exception):
 
 
 class game:
-    
+
+    EMPTY = ' '
     PONE = "❂"
     PTWO = "⍟"
     
     def __init__(self):
         self._Board = [[" " for _ in range(7)] for _ in range(6)]
         self._Player = game.PONE
+        self._Played = []
 
     def __repr__(self):
         board = " "
@@ -106,9 +108,17 @@ class game:
             if row[col] == " ":
                 row[col] = self._Player
                 playedRow = i
+                self._Played.append((5 - playedRow, col))
                 break
         self._Player = game.PTWO if self._Player == game.PONE else game.PONE
         return playedRow
+
+    def undo(self):
+        lastRow, lastCol = self._Played.pop()
+        self._Board[lastRow][lastCol] = game.EMPTY
+        self._Player = game.PTWO if self._Player == game.PONE else game.PONE
+        return lastRow, lastCol
+
 
 
 if __name__ == "__main__":
