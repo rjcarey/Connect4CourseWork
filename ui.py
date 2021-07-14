@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, HORIZONTAL, Scale, LEFT, RIGHT, OptionMenu
 from game import game, gameError
 from time import sleep
+from players import Ai
 
 class ui(ABC):
     @abstractmethod
@@ -33,6 +34,7 @@ class gui(ui):
             frame = Frame(setupWin)
             self.__setupWin = setupWin
             self.__opponentType = StringVar()
+            self.__opponent = None
 
             Grid.columnconfigure(self.__setupWin, 0, weight=1)
             Grid.rowconfigure(self.__setupWin, 0, weight=1)
@@ -84,6 +86,8 @@ class gui(ui):
     
     def _play(self):
         if not self.__gameInProgress:
+            if self.__opponentType == "AI":
+                self.__opponent = Ai()
             self.__gameInProgress = True
             self.__game = game()
             gameWin = Toplevel(self.__root)
