@@ -98,6 +98,7 @@ class gui(ui):
             console = Listbox(frame, height=3)
             console.grid(row=0, column=0, columnspan=4, sticky=E + W)
             self.__gameConsole = console
+            self.__gameConsole.insert(END, f"1| game against {self.__opponentType.get()}")
 
             #player turn label
             self.__playerTurn = StringVar()
