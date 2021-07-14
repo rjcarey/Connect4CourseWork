@@ -19,6 +19,7 @@ class gui(ui):
         self.__helpInProgress = False
         self.__setupInProgress = False
         self.__gameOver = False
+        self.__animating = False
         
         Button(frame, text="Help", command=self._help).pack(fill=X)
         Button(frame, text="Play", command=self._gameSetup).pack(fill=X)
@@ -166,7 +167,11 @@ class gui(ui):
 
 
     def __playMove(self, col):
-        if not self.__game.getWinner:
+        if self.__animating:
+            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
+            if self.__gameConsole.size() > 3:
+                self.__gameConsole.yview_scroll(1, UNITS)
+        elif not self.__game.getWinner:
             try:
                 counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
                 row = 5 - self.__game.play(col + 1)
@@ -195,12 +200,15 @@ class gui(ui):
                         self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
 
     def __animatedDrop(self, row, col, counter):
-        delay = 0.2
+        self.__animating = True
         for iRow in range(row):
             self.__canvas.itemconfig(self.__spaces[iRow][col], fill=counter)
-            #sleep(delay)
+            self.__canvas.update()
+            sleep(0.4)
             self.__canvas.itemconfig(self.__spaces[iRow][col], fill="white")
-            #sleep(delay)
+            self.__canvas.update()
+            sleep(0.1)
+        self.__animating = False
 
     def _dismissGame(self):
         self.__gameWin.destroy()
