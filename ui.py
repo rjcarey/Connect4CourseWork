@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, HORIZONTAL, Scale, LEFT, RIGHT, OptionMenu
 from game import game, gameError
+from time import sleep
 
 class ui(ABC):
     @abstractmethod
@@ -169,6 +170,7 @@ class gui(ui):
             try:
                 counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
                 row = 5 - self.__game.play(col + 1)
+                self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
                 counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
                 self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
@@ -191,6 +193,14 @@ class gui(ui):
                     counter = "#ff9999" if winningPlayer == game.PONE else "#ffffb3"
                     for row, col in run:
                         self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+
+    def __animatedDrop(self, row, col, counter):
+        delay = 0.2
+        for iRow in range(row):
+            self.__canvas.itemconfig(self.__spaces[iRow][col], fill=counter)
+            #sleep(delay)
+            self.__canvas.itemconfig(self.__spaces[iRow][col], fill="white")
+            #sleep(delay)
 
     def _dismissGame(self):
         self.__gameWin.destroy()
