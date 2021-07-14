@@ -107,13 +107,13 @@ class gui(ui):
 
             #board
             #Change tile to change board size
-            winWidth =  self.__gameWin.winfo_screenwidth()
+            winWidth = self.__gameWin.winfo_screenwidth()
             if winWidth < 40:
                 #min board tile size
                 winWidth = 40
-            elif winWidth > 115:
+            elif winWidth > 110:
                 #max board tile size
-                winWidth = 115
+                winWidth = 110
             tile = winWidth
             counterSize = tile * 0.8
             boardWidth = 7 * tile
@@ -132,8 +132,10 @@ class gui(ui):
             board.grid(row=1, column=0)
             self.__canvas = board
 
+            #undo button
+            Button(gameWin, text="Undo", command=self._undoMove).grid(row=3, column=0, sticky=N+S+W+E)
             #dismiss button
-            Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=3, column=0, sticky=N+S+W+E)
+            Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=4, column=0, sticky=N+S+W+E)
 
             #column buttons
             for col in range(7):
@@ -145,6 +147,9 @@ class gui(ui):
             # resizing
             for col in range(7):
                 Grid.columnconfigure(frame, col, weight=1)
+
+    def _undoMove(self):
+        pass
 
     def __playMove(self, col):
         if not self.__game.getWinner:
