@@ -1,7 +1,6 @@
 class gameError(Exception):
     pass
 
-
 class game:
 
     EMPTY = ' '
@@ -114,12 +113,13 @@ class game:
         return playedRow
 
     def undo(self):
-        lastRow, lastCol = self._Played.pop()
-        self._Board[lastRow][lastCol] = game.EMPTY
-        self._Player = game.PTWO if self._Player == game.PONE else game.PONE
-        return lastRow, lastCol
-
-
+        if self._Played:
+            lastRow, lastCol = self._Played.pop()
+            self._Board[lastRow][lastCol] = game.EMPTY
+            self._Player = game.PTWO if self._Player == game.PONE else game.PONE
+            return lastRow, lastCol
+        else:
+            raise gameError("no moves to undo...")
 
 if __name__ == "__main__":
     pass

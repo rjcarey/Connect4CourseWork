@@ -2,12 +2,10 @@ from abc import ABC, abstractmethod
 from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, HORIZONTAL, Scale, LEFT, RIGHT, OptionMenu
 from game import game, gameError
 
-
 class ui(ABC):
     @abstractmethod
     def run(self):
         raise NotImplementedError
-
 
 class gui(ui):
     def __init__(self):
@@ -19,6 +17,7 @@ class gui(ui):
         self.__gameInProgress = False
         self.__helpInProgress = False
         self.__setupInProgress = False
+        self.__gameOver = False
         
         Button(frame, text="Help", command=self._help).pack(fill=X)
         Button(frame, text="Play", command=self._gameSetup).pack(fill=X)
@@ -149,10 +148,21 @@ class gui(ui):
                 Grid.columnconfigure(frame, col, weight=1)
 
     def _undoMove(self):
-        row, col = self.__game.undo()
-        self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
-        counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
-        self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+        if not self.__gameOver:
+            try:
+                row, col = self.__game.undo()
+                self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
+                counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+            except gameError as e:
+                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
+                if self.__gameConsole.size() > 3:
+                    self.__gameConsole.yview_scroll(1, UNITS)
+        else:
+            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| undo unavailable")
+            if self.__gameConsole.size() > 3:
+                self.__gameConsole.yview_scroll(1, UNITS)
+
 
     def __playMove(self, col):
         if not self.__game.getWinner:
@@ -169,6 +179,7 @@ class gui(ui):
 
             winningPlayer, run = self.__game.getRun
             if winningPlayer:
+                self.__gameOver = True
                 if self.__game.getWinner != "Draw":
                     winner = 'RED' if self.__game.getWinner == game.PONE else 'YELLOW'
                     self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
@@ -181,9 +192,9 @@ class gui(ui):
                     for row, col in run:
                         self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
 
-
     def _dismissGame(self):
         self.__gameWin.destroy()
+        self.__gameOver = False
         self.__gameInProgress = False
 
     def _dismissHelp(self):
@@ -195,7 +206,6 @@ class gui(ui):
         
     def run(self):
         self.__root.mainloop()
-
 
 class terminal(ui):
     def __init__(self):
