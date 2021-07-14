@@ -61,8 +61,8 @@ class gui(ui):
             Button(frame, text="Back", command=self._dismissSetup).grid(row=2, column=0, columnspan=2)
 
     def _dismissSetup(self):
-        pass
-
+        self.__setupWin.destroy()
+        self.__setupInProgress = False
 
     def _help(self):
         if not self.__helpInProgress:
