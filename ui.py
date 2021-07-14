@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS
+from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, HORIZONTAL, Scale, LEFT, RIGHT, OptionMenu
 from game import game, gameError
 
 
@@ -18,11 +18,52 @@ class gui(ui):
         self.__root = root
         self.__gameInProgress = False
         self.__helpInProgress = False
+        self.__setupInProgress = False
         
         Button(frame, text="Help", command=self._help).pack(fill=X)
-        Button(frame, text="Play", command=self._play).pack(fill=X)
+        Button(frame, text="Play", command=self._gameSetup).pack(fill=X)
         Button(frame, text="Quit", command=self._quit).pack(fill=X)
-        
+
+    def _gameSetup(self):
+        if not self.__setupInProgress:
+            self.__setupInProgress = True
+            setupWin = Toplevel(self.__root)
+            setupWin.title("Game Setup")
+            frame = Frame(setupWin)
+            self.__setupWin = setupWin
+            self.__opponentType = StringVar()
+
+            Grid.columnconfigure(self.__setupWin, 0, weight=1)
+            Grid.rowconfigure(self.__setupWin, 0, weight=1)
+            frame.grid(row=0, column=0, sticky=N + S + W + E)
+
+            #first player
+            '''
+            Label(frame, text="Choose Player 1:").grid(row=0)
+            Label(frame, text="RED").grid(row=1, column=0)
+            turnSlider = Scale(self.__setupWin, from_=0, to_=1, orient=HORIZONTAL, showvalue=0)
+            turnSlider.grid(row=1, column=1)
+            Label(frame, text="YELLOW").grid(row=1, column=2)
+            #self._firstTurn = turnSlider.get()
+            '''
+
+            #opponent
+            Label(frame, text="Choose Opponent:").grid(row=0, column=0)
+            options = ["Human", "AI"]
+            self.__opponentType.set("Human")
+            opponentDropDown = OptionMenu(self.__setupWin, self.__opponentType, *options)
+            opponentDropDown.grid(row=0, column=1, sticky=N)
+
+            #play button
+            Button(frame, text="Play", command=self._play).grid(row=1, column=0, columnspan=2)
+
+            #back button
+            Button(frame, text="Back", command=self._dismissSetup).grid(row=2, column=0, columnspan=2)
+
+    def _dismissSetup(self):
+        pass
+
+
     def _help(self):
         if not self.__helpInProgress:
             self.__helpInProgress = True
@@ -31,10 +72,12 @@ class gui(ui):
             frame = Frame(helpWin)
             frame.pack()
             self.__helpWin = helpWin
+
             #rule display
             Label(frame, text="Take it in turns to  drop counters into the board.").pack()
             Label(frame, text="First person to get a vertical, horizontal or diagonal run of four counters wins!").pack()
             Label(frame, text="If the board fills and nobody has a run of four yet then the game is drawn.").pack()
+
             #dismiss button
             Button(frame, text="Dismiss", command=self._dismissHelp).pack()
     
