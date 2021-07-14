@@ -52,7 +52,7 @@ class gui(ui):
 
             #opponent
             Label(frame, text="Choose Opponent:").grid(row=0, column=0)
-            options = ["Human", "AI"]
+            options = ["Human", "Practice AI", "Easy AI", "Medium AI", "Hard AI"]
             self.__opponentType.set("Human")
             opponentDropDown = OptionMenu(self.__setupWin, self.__opponentType, *options)
             opponentDropDown.grid(row=0, column=1, sticky=N)
@@ -86,7 +86,7 @@ class gui(ui):
     
     def _play(self):
         if not self.__gameInProgress:
-            if self.__opponentType == "AI":
+            if self.__opponentType != "Human":
                 self.__opponent = Ai()
             self.__gameInProgress = True
             self.__game = game()
