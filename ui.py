@@ -87,7 +87,7 @@ class gui(ui):
     def _play(self):
         if not self.__gameInProgress:
             if self.__opponentType != "Human":
-                self.__opponent = Ai()
+                self.__opponent = Ai(self.__opponentType.get())
             self.__gameInProgress = True
             self.__game = game()
             gameWin = Toplevel(self.__root)
@@ -188,20 +188,34 @@ class gui(ui):
                 if self.__gameConsole.size() > 3:
                     self.__gameConsole.yview_scroll(1, UNITS)
 
-            winningPlayer, run = self.__game.getRun
-            if winningPlayer:
-                self.__gameOver = True
-                if self.__game.getWinner != "Draw":
-                    winner = 'RED' if self.__game.getWinner == game.PONE else 'YELLOW'
-                    self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
-                else:
-                    self.__playerTurn.set(f'THE GAME WAS DRAWN')
+            self.__checkIfWon()
 
-                #highlight winning run
-                if run:
-                    counter = "#ff9999" if winningPlayer == game.PONE else "#ffffb3"
-                    for row, col in run:
-                        self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+            if self.__opponent and not self.__game.getWinner:
+                #AI move
+                counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
+                col = self.__opponent.getColumn(self.__game.Board, self.__game.getPlayer)
+                row = 5 - self.__game.play(col + 1)
+                self.__animatedDrop(row, col, counter)
+                self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+                counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+                self.__checkIfWon()
+
+    def __checkIfWon(self):
+        winningPlayer, run = self.__game.getRun
+        if winningPlayer:
+            self.__gameOver = True
+            if self.__game.getWinner != "Draw":
+                winner = 'RED' if self.__game.getWinner == game.PONE else 'YELLOW'
+                self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
+            else:
+                self.__playerTurn.set(f'THE GAME WAS DRAWN')
+
+            # highlight winning run
+            if run:
+                counter = "#ff9999" if winningPlayer == game.PONE else "#ffffb3"
+                for row, col in run:
+                    self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
 
     def __animatedDrop(self, row, col, counter):
         self.__animating = True

@@ -3,12 +3,12 @@ class gameError(Exception):
 
 class game:
 
-    EMPTY = ' '
+    EMPTY = " "
     PONE = "❂"
     PTWO = "⍟"
     
     def __init__(self):
-        self._Board = [[" " for _ in range(7)] for _ in range(6)]
+        self.Board = [[" " for _ in range(7)] for _ in range(6)]
         self._Player = game.PONE
         self._Played = []
 
@@ -17,9 +17,9 @@ class game:
         for column in range(1, 8):
             board += f"{column} "
         board += "\n"
-        for rowNumber in range(len(self._Board)):
+        for rowNumber in range(len(self.Board)):
             board += "|"
-            row = self._Board[rowNumber]
+            row = self.Board[rowNumber]
             for column in row:
                 board += f"{column}|"
             board += "\n"
@@ -34,7 +34,7 @@ class game:
         # check horizontal
         player = " "
         counters = []
-        for ir, row in enumerate(self._Board):
+        for ir, row in enumerate(self.Board):
             run = 0
             for ic, col in enumerate(row):
                 if col == player:
@@ -53,40 +53,40 @@ class game:
         for column in range(7):
             run = 0
             for row in range(6):
-                if self._Board[row][column] == player:
+                if self.Board[row][column] == player:
                     run += 1
                     counters.append((row, column))
                     if run == 4 and player != " ":
                         return player, counters
                 else:
-                    player = self._Board[row][column]
+                    player = self.Board[row][column]
                     counters = [(row, column)]
                     run = 1
 
         # check diagonal
-        for rowNum, row in enumerate(self._Board):
+        for rowNum, row in enumerate(self.Board):
             for colNum, col in enumerate(row):
                 if col != " ":
                     # \ diagonal
                     if colNum < 4 and rowNum < 3:
-                        counterOne = self._Board[rowNum][colNum]
-                        counterTwo = self._Board[rowNum + 1][colNum + 1]
-                        counterThree = self._Board[rowNum + 2][colNum + 2]
-                        counterFour = self._Board[rowNum + 3][colNum + 3]
+                        counterOne = self.Board[rowNum][colNum]
+                        counterTwo = self.Board[rowNum + 1][colNum + 1]
+                        counterThree = self.Board[rowNum + 2][colNum + 2]
+                        counterFour = self.Board[rowNum + 3][colNum + 3]
                         if counterOne == counterTwo == counterThree == counterFour:
                             return col, [(rowNum, colNum), (rowNum + 1, colNum + 1), (rowNum + 2, colNum + 2), (rowNum + 3, colNum + 3)]
 
                     # / diagonal
                     if colNum > 2 and rowNum < 3:
-                        counterOne = self._Board[rowNum][colNum]
-                        counterTwo = self._Board[rowNum + 1][colNum - 1]
-                        counterThree = self._Board[rowNum + 2][colNum - 2]
-                        counterFour = self._Board[rowNum + 3][colNum - 3]
+                        counterOne = self.Board[rowNum][colNum]
+                        counterTwo = self.Board[rowNum + 1][colNum - 1]
+                        counterThree = self.Board[rowNum + 2][colNum - 2]
+                        counterFour = self.Board[rowNum + 3][colNum - 3]
                         if counterOne == counterTwo == counterThree == counterFour:
                             return col, [(rowNum, colNum), (rowNum + 1, colNum - 1), (rowNum + 2, colNum - 2), (rowNum + 3, colNum - 3)]
         # check draw
         occupiedCount = 0
-        for row in self._Board:
+        for row in self.Board:
             for col in row:
                 if col != " ":
                     occupiedCount += 1
@@ -101,9 +101,9 @@ class game:
 
     def play(self, column):
         col = column - 1
-        if self._Board[0][col] != " ":
+        if self.Board[0][col] != " ":
             raise gameError("column full, play again...")
-        for i, row in enumerate(reversed(self._Board)):
+        for i, row in enumerate(reversed(self.Board)):
             if row[col] == " ":
                 row[col] = self._Player
                 playedRow = i
@@ -115,7 +115,7 @@ class game:
     def undo(self):
         if self._Played:
             lastRow, lastCol = self._Played.pop()
-            self._Board[lastRow][lastCol] = game.EMPTY
+            self.Board[lastRow][lastCol] = game.EMPTY
             self._Player = game.PTWO if self._Player == game.PONE else game.PONE
             return lastRow, lastCol
         else:
