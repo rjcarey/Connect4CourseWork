@@ -55,7 +55,7 @@ class Ai:
             score = 0
             currentScore = 0
             if upOne and leftOne:
-                if board[playedRow -1][column -1] == counter:
+                if board[playedRow - 1][column - 1] == counter:
                     currentScore += 1
                     if upTwo and leftTwo:
                         if board[playedRow - 2][column - 2] == counter:
@@ -140,15 +140,16 @@ class Ai:
             score += currentScore
             scores[column] = score
 
-            #find the best scoring move
-            print(scores)
-            maxScore = -1
-            maxIndex = -1
-            for i, score in enumerate(scores):
-                if maxScore < score:
-                    maxScore = score
-                    maxIndex = i
-            return maxIndex
+        #find the best scoring move
+        maxScore = -1
+        maxIndex = []
+        for i, score in enumerate(scores):
+            if maxScore < score:
+                maxScore = score
+                maxIndex = [i]
+            elif maxScore == score:
+                maxIndex.append(i)
+        return maxIndex[randint(0, len(maxIndex) - 1)]
 
     def mediumAI(self, board):
         #low depth minimax
