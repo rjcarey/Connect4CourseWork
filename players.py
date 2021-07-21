@@ -34,23 +34,26 @@ class Ai:
                 break
 
             #find the row that would be played in
-            for i, row in enumerate(reversed(board)):
-                if row[column] == " ":
-                    playedRow = 5 - i
+            for i, row in enumerate(board):
+                if row[column] != " ":
+                    playedRow = i - 1
+                elif i == 5:
+                    playedRow = 5
 
             #check what counters this play would connect with and calculate resulting score
             leftOne = True if column > 0 else False
             leftTwo = True if column > 1 else False
             leftThree = True if column > 2 else False
-            downOne = True if playedRow < 6 else False
-            downTwo = True if playedRow < 5 else False
-            downThree = True if playedRow > 4 else False
+            downOne = True if playedRow < 5 else False
+            downTwo = True if playedRow < 4 else False
+            downThree = True if playedRow < 3 else False
             rightOne = True if column < 6 else False
             rightTwo = True if column < 5 else False
             rightThree = True if column < 4 else False
             upOne = True if playedRow > 0 else False
             upTwo = True if playedRow > 1 else False
             upThree = True if playedRow > 2 else False
+            print(f"{column}, {playedRow}: {leftOne}, {leftTwo}, {leftThree}, {downOne}, {downTwo}, {downThree}, {rightOne}, {rightTwo}, {rightThree}, {upOne}, {upTwo}, {upThree}")
 
             score = 0
             currentScore = 0
@@ -141,6 +144,7 @@ class Ai:
             scores[column] = score
 
         #find the best scoring move
+        print(scores)
         maxScore = -1
         maxIndex = []
         for i, score in enumerate(scores):
@@ -149,7 +153,8 @@ class Ai:
                 maxIndex = [i]
             elif maxScore == score:
                 maxIndex.append(i)
-        return maxIndex[randint(0, len(maxIndex) - 1)]
+        index = 0 if len(maxIndex) == 1 else randint(0, len(maxIndex) - 1)
+        return maxIndex[index]
 
     def mediumAI(self, board):
         #low depth minimax
