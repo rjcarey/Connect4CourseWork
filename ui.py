@@ -85,8 +85,9 @@ class gui(ui):
             Button(frame, text="Dismiss", command=self._dismissHelp).pack()
     
     def _play(self):
+        #print(self.__opponentType.get())
         if not self.__gameInProgress:
-            if self.__opponentType != "Human":
+            if self.__opponentType.get() != "Human":
                 self.__opponent = Ai(self.__opponentType.get())
             self.__gameInProgress = True
             self.__game = game()
@@ -107,7 +108,11 @@ class gui(ui):
 
             #player turn label
             self.__playerTurn = StringVar()
-            self.__playerTurn.set('RED TO PLAY\nCHOOSE COLUMN')
+            if self.__opponentType.get() == "Human":
+                self.__playerTurn.set('RED TO PLAY\nCHOOSE COLUMN')
+            else:
+                self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
+
             Label(frame, textvariable=self.__playerTurn, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
 
             #board
@@ -154,7 +159,7 @@ class gui(ui):
                 Grid.columnconfigure(frame, col, weight=1)
 
     def _undoMove(self):
-        if not self.__gameOver:
+        if not self.__gameOver and self.__opponentType.get() == "Human":
             try:
                 row, col = self.__game.undo()
                 self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
@@ -179,26 +184,35 @@ class gui(ui):
             try:
                 counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
                 row = 5 - self.__game.play(col + 1)
+                #animate counter
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
-                counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
-                self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+                #change turn display
+                if self.__opponentType.get() == "Human":
+                    counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                    self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+                else:
+                    self.__playerTurn.set(f'OPPONENTS TURN\nPLEASE WAIT')
             except gameError as e:
+                #print error message to console
                 self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
+                #scroll console if needed
                 if self.__gameConsole.size() > 3:
                     self.__gameConsole.yview_scroll(1, UNITS)
-
+            #check if played winning move
             self.__checkIfWon()
 
-            if self.__opponent and not self.__game.getWinner:
+            if self.__opponentType.get() != "Human" and not self.__game.getWinner:
                 #AI move
                 counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
                 col = self.__opponent.getColumn(self.__game.Board, self.__game.getPlayer)
                 row = 5 - self.__game.play(col + 1)
+                #animate drop
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
-                counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
-                self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+                #change turn display
+                self.__playerTurn.set(f'YOUR TURN\nCHOOSE COLUMN')
+                #check if played a winning move
                 self.__checkIfWon()
 
     def __checkIfWon(self):
@@ -207,7 +221,12 @@ class gui(ui):
             self.__gameOver = True
             if self.__game.getWinner != "Draw":
                 winner = 'RED' if self.__game.getWinner == game.PONE else 'YELLOW'
-                self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
+                if self.__opponentType.get() == "Human":
+                    winner = 'RED' if self.__game.getWinner == game.PONE else 'YELLOW'
+                    self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
+                else:
+                    winner = 'YOU' if self.__game.getWinner == game.PONE else 'OPPONENT'
+                    self.__playerTurn.set(f'{winner} WON\nGOOD GAME!')
             else:
                 self.__playerTurn.set(f'THE GAME WAS DRAWN')
 

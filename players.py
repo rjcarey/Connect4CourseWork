@@ -190,3 +190,6 @@ class Ai:
     def hardAI(self, board):
         #medium depth minimax and trapping
         pass
+
+    def myMiniMax(self, depth, board, aiTurn):
+        pass
