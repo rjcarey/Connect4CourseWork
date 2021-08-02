@@ -2,12 +2,10 @@ from ui import terminal, gui
 from sys import argv
 
 def usage():
-    print(f"""
-Error: Incorrect run command
-Command: ConnectFour.py [g | t]
-g : play with the GUI
-t : play with the Terminal""")
+    print(f"Error: Incorrect run command\nCommand: ConnectFour.py [g | t | tn]\ng : play with the GUI\nt : play with the Terminal\ntn : play LAN on the Terminal")
     quit()
+
+network = False
 
 if __name__ == "__main__":
     if len(argv) == 2:
@@ -17,6 +15,10 @@ if __name__ == "__main__":
         elif argv[1] == "g":
             print("initialising gui mode...\n")
             ui = gui()
+        elif argv[1] == "tn":
+            print("initialising terminal LAN mode...\n")
+            network = True
+            ui = terminal()
         else:
             usage()
     else:
