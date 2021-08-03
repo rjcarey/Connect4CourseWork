@@ -1,7 +1,7 @@
 from configs import serverIP, serverPort
 from asyncio import Queue, wait, create_task, FIRST_COMPLETED
 from json import dumps, loads
-from websocket import connect
+from websockets import connect
 
 class client:
     def __innit__(self):
