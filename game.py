@@ -120,6 +120,3 @@ class game:
             return lastRow, lastCol
         else:
             raise gameError("no moves to undo...")
-
-if __name__ == "__main__":
-    pass

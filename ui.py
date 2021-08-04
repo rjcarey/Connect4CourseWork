@@ -3,6 +3,11 @@ from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, St
 from game import game, gameError
 from time import sleep
 from players import Ai
+from client import client
+from aioconsole import ainput
+
+class hostError(Exception):
+    pass
 
 class ui(ABC):
     @abstractmethod
@@ -263,10 +268,72 @@ class gui(ui):
         self.__root.mainloop()
 
 class terminal(ui):
-    def __init__(self):
+    def __init__(self, network):
         self._Game = game()
+        self._network = network
+        self._client = None
+        self._name = ""
+        self._opponent = ""
+        self._hosting = False
 
-    def run(self):
+    async def runClient(self):
+        await self._client.run()
+
+    async def run(self):
+        if self._network:
+            #if playing a networked game:
+            #initialise a client object
+            self._client = client()
+            #allow the user to enter a username
+            self._name = await ainput("Enter a username: ")
+            try:
+                #hosting or joining?
+                playerType = await ainput("Would you like to host a game or join a game? [h|j]\n")
+                if playerType == 'h':
+                    #if hosting, send a host command
+                    await self._client.send({"from": self._name, "cmd": "tHost"})
+                    self._hosting = True
+                #if joining
+                elif playerType == 'j':
+                        #ask for the name of the host
+                        hostName = await ainput("Enter the host's username: ")
+                        #send a join command to the host
+                        await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
+                else:
+                    raise hostError
+            except hostError:
+                print("incorrect input, please enter 'h' or 'j'")
+
+            #while the client hasn't got an opponent
+            while not self._opponent:
+                #wait for a message from the server
+                message = await self._client.recv()
+                #get the value from the key 'cmd' in the dictionary 'message', if the is no key 'cmd' return 'None' as the value
+                cmd = message.get("cmd", None)
+
+                if cmd == "tHost":
+                    #if there is a host command, let clients know who's hosting
+                    print(f'{message.get("from")} is waiting for opponent...')
+                elif cmd == "tJoin" and message.get("to") == self._name and self._hosting and not self._opponent:
+                    #if there is a join command check if it is directed to this client
+                    #ask if the client wants to accept the match
+                    accepted = await ainput(f'Accept match from {message.get("from")}? [y|n]\n')
+                    if accepted == "y":
+                        #if the match is accepted set opponent to the sender and send an acknowledgment to the opponent
+                        self._opponent = message.get("from")
+                        await self._client.send({"to": self._opponent, "from": self._name, "cmd": "acc"})
+                    else:
+                        await self._client.send({"to": message.get("from"), "from": self._name, "cmd": "rej"})
+                elif cmd == "acc:" and self._name == message.get("to"):
+                    print("match request accepted")
+                    self._opponent = message.get("from")
+                elif cmd == "rej" and self._name == message.get("to"):
+                    print("match request rejected")
+                    # ask for the name of the host
+                    hostName = await ainput("Enter the host's username: ")
+                    # send a join command to the host
+                    await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
+
         while not self._Game.getWinner:
             print(self._Game)
             print(f"{self._Game.getPlayer} to play...")

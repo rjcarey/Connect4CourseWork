@@ -4,7 +4,7 @@ from configs import serverIP, serverPort
 
 
 class server:
-    def __innit__(self):
+    def __init__(self):
         #set of connected devices
         self._connections = set()
         #queue of messages
@@ -13,6 +13,7 @@ class server:
     async def _consumer_handler(self, websocket):
         async for message in websocket:
             #wait for a message and put it in the queue when received
+            print(message)
             await self._messageQ.put(message)
 
     async def _producer_handler(self):
