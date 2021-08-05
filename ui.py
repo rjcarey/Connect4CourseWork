@@ -5,6 +5,7 @@ from time import sleep
 from players import Ai
 from client import client
 from aioconsole import ainput
+from random import randint
 
 class hostError(Exception):
     pass
@@ -275,6 +276,7 @@ class terminal(ui):
         self._name = ""
         self._opponent = ""
         self._hosting = False
+        self._clientTurn = True
 
     async def runClient(self):
         await self._client.run()
@@ -313,44 +315,69 @@ class terminal(ui):
 
                 if cmd == "tHost":
                     #if there is a host command, let clients know who's hosting
-                    print(f'{message.get("from")} is waiting for opponent...')
-                elif cmd == "tJoin" and message.get("to") == self._name and self._hosting and not self._opponent:
+                    print(f'{message.get("from", None)} is waiting for opponent...')
+                elif cmd == "tJoin" and message.get("to", None) == self._name and self._hosting and not self._opponent:
                     #if there is a join command check if it is directed to this client
                     #ask if the client wants to accept the match
-                    accepted = await ainput(f'Accept match from {message.get("from")}? [y|n]\n')
+                    accepted = await ainput(f'Accept match from {message.get("from", None)}? [y|n]\n')
                     if accepted == "y":
+                        print("ACCEPTED")
                         #if the match is accepted set opponent to the sender and send an acknowledgment to the opponent
-                        self._opponent = message.get("from")
-                        await self._client.send({"to": self._opponent, "from": self._name, "cmd": "acc"})
+                        await self._client.send({"to": message.get("from", None), "from": self._name, "cmd": "acc"})
+                        self._opponent = message.get("from", None)
                     else:
-                        await self._client.send({"to": message.get("from"), "from": self._name, "cmd": "rej"})
-                elif cmd == "acc:" and self._name == message.get("to"):
+                        await self._client.send({"to": message.get("from", None), "from": self._name, "cmd": "rej"})
+                elif cmd == "acc:" and self._name == message.get("to", None):
                     print("match request accepted")
-                    self._opponent = message.get("from")
-                elif cmd == "rej" and self._name == message.get("to"):
+                    self._clientTurn = False
+                    self._opponent = message.get("from", None)
+                elif cmd == "rej" and self._name == message.get("to", None):
                     print("match request rejected")
                     # ask for the name of the host
                     hostName = await ainput("Enter the host's username: ")
                     # send a join command to the host
                     await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
 
+        # while the game is not won
         while not self._Game.getWinner:
+            # print the board
             print(self._Game)
-            print(f"{self._Game.getPlayer} to play...")
-            # type check
-            try:
-                column = int(input("Enter column number to drop counter: "))
-            except ValueError:
-                print("\n\n\n\nERROR: invalid input: expected integer")
-                continue
-            # range check
-            if 1 <= column <= 7:
+            if self._clientTurn:
+                # if its my turn
+                # notify whose turn it is
+                if not self._client:
+                    print(f"{self._Game.getPlayer} to play...")
+                else:
+                    print(f"Your turn...")
+
+                # type check
                 try:
-                    self._Game.play(column)
-                except gameError:
-                    print("\n\n\n\nERROR: column full")
+                    column = int(input("Enter column number to drop counter: "))
+                except ValueError:
+                    print("\n\n\n\nERROR: invalid input: expected integer")
+                    continue
+                # range check
+                if 1 <= column <= 7:
+                    try:
+                        self._Game.play(column)
+                    except gameError:
+                        print("\n\n\n\nERROR: column full")
+                else:
+                    print("\n\n\n\nERROR: input must be between 1 and 7 inclusive")
+
+                if self._client:
+                    # if playing a networked game, send the move to the opponent
+                    await self._client.send({"from": self._name, "to": self._opponent, "cmd": "move", "col": column})
             else:
-                print("\n\n\n\nERROR: input must be between 1 and 7 inclusive")
+                # if its the opponents turn
+                print(f"{self._opponent}'s turn, please wait...")
+                message = await self._client.recv()
+                cmd = message.get("cmd", None)
+                if cmd == "move" and message.get("to", None) == self._name:
+                    self._Game.play(message.get("col", None))
+            if self._client:
+                self._clientTurn = True if not self._clientTurn else False
+
         print(self._Game)
         winner = self._Game.getWinner
         if winner == "Draw":
