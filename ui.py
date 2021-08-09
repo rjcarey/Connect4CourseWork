@@ -319,21 +319,30 @@ class terminal(ui):
                 elif cmd == "tJoin" and message.get("to", None) == self._name and self._hosting and not self._opponent:
                     # if there is a join command check if it is directed to this client
                     # ask if the client wants to accept the match
-                    accepted = await ainput(f'Accept match from {message.get("from", None)}? [y|n]\n')
-                    # if the match is accepted set opponent to the sender and send an acknowledgment to the opponent
-                    if accepted == "y":
-                        # let the joiner know the match has been accepted
-                        print("TEST: CLIENT REACH ERROR POINT")
-                        # message which is not sending
-                        await self._client.send({"from": self._name, "to": message.get("from", None), "cmd": "acc"})
-                        self._opponent = message.get("from", None)
-                    else:
-                        await self._client.send({"to": message.get("from", None), "from": self._name, "cmd": "rej"})
+                    accepted = ""
+                    while accepted != "y" and accepted != "n":
+                        accepted = await ainput(f'Accept match from {message.get("from", None)}? [y|n]\n')
+                        # if the match is accepted set opponent to the sender and send an acknowledgment to the opponent
+                        if accepted == "y":
+                            # let the joiner know the match has been accepted
+                            await self._client.send({"from": self._name, "to": message.get("from", None), "cmd": "acc"})
+                            # set the opponent
+                            self._opponent = message.get("from", None)
+                        elif accepted == "n":
+                            # let the joiner know the match has been rejected
+                            await self._client.send({"to": message.get("from", None), "from": self._name, "cmd": "rej"})
+                        else:
+                            print("invalid input")
                 elif cmd == "acc" and self._name == message.get("to", None):
+                    # if the client receives an accept message
+                    # let the user know their match has been accepted
                     print("match request accepted")
+                    # set the clientTurn to false as the joiner has the second turn
                     self._clientTurn = False
+                    # set the opponent
                     self._opponent = message.get("from", None)
                 elif cmd == "rej" and self._name == message.get("to", None):
+                    # let the user know their match has been rejected and ask them for a new host username
                     print("match request rejected")
                     # ask for the name of the host
                     hostName = await ainput("Enter the host's username: ")
@@ -364,6 +373,7 @@ class terminal(ui):
                     try:
                         self._Game.play(column)
                     except gameError:
+                        # column full error
                         print("\n\n\n\nERROR: column full")
                 else:
                     print("\n\n\n\nERROR: input must be between 1 and 7 inclusive")
@@ -373,17 +383,35 @@ class terminal(ui):
                     await self._client.send({"from": self._name, "to": self._opponent, "cmd": "move", "col": column})
             else:
                 # if its the opponents turn
+                # print whose turn it is
                 print(f"{self._opponent}'s turn, please wait...")
-                message = await self._client.recv()
-                cmd = message.get("cmd", None)
-                if cmd == "move" and message.get("to", None) == self._name:
-                    self._Game.play(message.get("col", None))
+                col = -1
+                while col == -1:
+                    # wait for a message from the server
+                    message = await self._client.recv()
+                    cmd = message.get("cmd", None)
+                    # if the message is a move command directed to this client
+                    if cmd == "move" and message.get("to", None) == self._name:
+                        # get the move
+                        col = message.get("col", -1)
+                self._Game.play(col)
+
             if self._client:
+                # if the client is playing a networked game flip the turn
                 self._clientTurn = True if not self._clientTurn else False
 
+        # when somebody has won, print the board
         print(self._Game)
+        # get the winner
         winner = self._Game.getWinner
+        # print the game end message
         if winner == "Draw":
             print("The game was a draw!")
         else:
-            print(f"{winner} has won, well played!")
+            if not self._client:
+                print(f"{winner} has won, well played!")
+            else:
+                if self._clientTurn:
+                    print("You lost!")
+                else:
+                    print("You won!")

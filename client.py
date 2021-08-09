@@ -19,7 +19,7 @@ class client:
 
     async def send(self, message):
         # wait to put message in the transmit queue
-        print(message)
+        #print(message)
         await self._txq.put(dumps(message))
 
     async def recv(self):
