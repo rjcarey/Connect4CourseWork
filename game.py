@@ -1,6 +1,7 @@
 class gameError(Exception):
     pass
 
+
 class game:
 
     EMPTY = " "
@@ -8,12 +9,12 @@ class game:
     PTWO = "⍟"
     
     def __init__(self):
-        self.Board = [[" " for _ in range(7)] for _ in range(6)]
+        self.Board = [[game.EMPTY for _ in range(7)] for _ in range(6)]
         self._Player = game.PONE
         self._Played = []
 
     def __repr__(self):
-        board = " "
+        board = game.EMPTY
         for column in range(1, 8):
             board += f"{column} "
         board += "\n"
@@ -32,7 +33,7 @@ class game:
     @property
     def getRun(self):
         # check horizontal
-        player = " "
+        player = game.EMPTY
         counters = []
         for ir, row in enumerate(self.Board):
             run = 0
@@ -40,7 +41,7 @@ class game:
                 if col == player:
                     run += 1
                     counters.append((ir, ic))
-                    if run == 4 and player != " ":
+                    if run == 4 and player != game.EMPTY:
                         return player, counters
                 else:
                     player = col
@@ -48,7 +49,7 @@ class game:
                     run = 1
 
         # check vertical
-        player = " "
+        player = game.EMPTY
         counters = []
         for column in range(7):
             run = 0
@@ -56,7 +57,7 @@ class game:
                 if self.Board[row][column] == player:
                     run += 1
                     counters.append((row, column))
-                    if run == 4 and player != " ":
+                    if run == 4 and player != game.EMPTY:
                         return player, counters
                 else:
                     player = self.Board[row][column]
@@ -66,7 +67,7 @@ class game:
         # check diagonal
         for rowNum, row in enumerate(self.Board):
             for colNum, col in enumerate(row):
-                if col != " ":
+                if col != game.EMPTY:
                     # \ diagonal
                     if colNum < 4 and rowNum < 3:
                         counterOne = self.Board[rowNum][colNum]
@@ -88,7 +89,7 @@ class game:
         occupiedCount = 0
         for row in self.Board:
             for col in row:
-                if col != " ":
+                if col != game.EMPTY:
                     occupiedCount += 1
         if occupiedCount == 42:
             return "Draw", []
@@ -101,10 +102,10 @@ class game:
 
     def play(self, column):
         col = column - 1
-        if self.Board[0][col] != " ":
+        if self.Board[0][col] != game.EMPTY:
             raise gameError("column full, play again...")
         for i, row in enumerate(reversed(self.Board)):
-            if row[col] == " ":
+            if row[col] == game.EMPTY:
                 row[col] = self._Player
                 playedRow = i
                 self._Played.append((5 - playedRow, col))

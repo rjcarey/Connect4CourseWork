@@ -5,15 +5,17 @@ from time import sleep
 from players import Ai
 from client import client
 from aioconsole import ainput
-from random import randint
+
 
 class hostError(Exception):
     pass
+
 
 class ui(ABC):
     @abstractmethod
     def run(self):
         raise NotImplementedError
+
 
 class gui(ui):
     def __init__(self):
@@ -25,12 +27,30 @@ class gui(ui):
         self.__gameInProgress = False
         self.__helpInProgress = False
         self.__setupInProgress = False
+        self.__typeChoiceInProgress = False
         self.__gameOver = False
         self.__animating = False
         
         Button(frame, text="Help", command=self._help).pack(fill=X)
-        Button(frame, text="Play", command=self._gameSetup).pack(fill=X)
+        Button(frame, text="Play", command=self._gametype).pack(fill=X)
         Button(frame, text="Quit", command=self._quit).pack(fill=X)
+
+    def _gametype(self):
+        if not self.__typeChoiceInProgress:
+            self.__typeChoiceInProgress = True
+            typeChoiceWin = Toplevel(self.__root)
+            typeChoiceWin.title("Game Type")
+            frame = Frame(typeChoiceWin)
+            frame.pack()
+            self.__typeChoiceWin = typeChoiceWin
+
+            Button(frame, text="Pass and Play", command=self._gameSetup).pack(fill=X)
+            Button(frame, text="Play Local Online", command=self._gameSetup).pack(fill=X)
+            Button(frame, text="Dismiss", command=self._dismissTypeChoice).pack(fill=X)
+
+    def _dismissTypeChoice(self):
+        self.__typeChoiceWin.destroy()
+        self.__typeChoiceInProgress = False
 
     def _gameSetup(self):
         if not self.__setupInProgress:
@@ -179,7 +199,6 @@ class gui(ui):
             self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| undo unavailable")
             if self.__gameConsole.size() > 3:
                 self.__gameConsole.yview_scroll(1, UNITS)
-
 
     def __playMove(self, col):
         if self.__animating:
