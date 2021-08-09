@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, HORIZONTAL, Scale, LEFT, RIGHT, OptionMenu
+from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, HORIZONTAL, Scale, LEFT, RIGHT, OptionMenu, Entry
 from game import game, gameError
 from time import sleep
 from players import Ai
@@ -28,6 +28,7 @@ class gui(ui):
         self.__helpInProgress = False
         self.__setupInProgress = False
         self.__typeChoiceInProgress = False
+        self.__LANSetupInProgress = False
         self.__gameOver = False
         self.__animating = False
         
@@ -45,12 +46,43 @@ class gui(ui):
             self.__typeChoiceWin = typeChoiceWin
 
             Button(frame, text="Pass and Play", command=self._gameSetup).pack(fill=X)
-            Button(frame, text="Play Local Online", command=self._gameSetup).pack(fill=X)
+            Button(frame, text="Play Local Online", command=self._LANSetup).pack(fill=X)
             Button(frame, text="Dismiss", command=self._dismissTypeChoice).pack(fill=X)
 
     def _dismissTypeChoice(self):
         self.__typeChoiceWin.destroy()
         self.__typeChoiceInProgress = False
+
+    def _LANSetup(self):
+        if not self.__LANSetupInProgress:
+            self.__LANSetupInProgress = True
+            LANSetupWin = Toplevel(self.__root)
+            LANSetupWin.title("LAN Setup")
+            frame = Frame(LANSetupWin)
+            frame.pack()
+            self.__LANSetupWin = LANSetupWin
+            self.__joinCode = StringVar()
+
+            Button(frame, text="Host", command=self._hostGame).pack(fill=X)
+            Entry(frame, textvariable=self.__joinCode).pack(fill=X)
+            Button(frame, text="Join", command=self._attemptJoin).pack(fill=X)
+            Button(frame, text="Back", command=self._dismissLANSetup).pack(fill=X)
+
+            # console
+            console = Listbox(frame, height=3)
+            console.pack(fill=X)
+            self.__LANConsole = console
+            #self.__LANConsole.insert(END, f"1| ")
+
+    def _hostGame(self):
+        pass
+
+    def _attemptJoin(self):
+        pass
+
+    def _dismissLANSetup(self):
+        self.__LANSetupWin.destroy()
+        self.__LANSetupInProgress = False
 
     def _gameSetup(self):
         if not self.__setupInProgress:
