@@ -306,28 +306,30 @@ class terminal(ui):
             except hostError:
                 print("incorrect input, please enter 'h' or 'j'")
 
-            #while the client hasn't got an opponent
+            # while the client hasn't got an opponent
             while not self._opponent:
-                #wait for a message from the server
+                # wait for a message from the server
                 message = await self._client.recv()
-                #get the value from the key 'cmd' in the dictionary 'message', if the is no key 'cmd' return 'None' as the value
+                # get the value from the key 'cmd' in the dictionary 'message', if the is no key 'cmd' return 'None' as the value
                 cmd = message.get("cmd", None)
 
                 if cmd == "tHost":
-                    #if there is a host command, let clients know who's hosting
+                    # if there is a host command, let clients know who's hosting
                     print(f'{message.get("from", None)} is waiting for opponent...')
                 elif cmd == "tJoin" and message.get("to", None) == self._name and self._hosting and not self._opponent:
-                    #if there is a join command check if it is directed to this client
-                    #ask if the client wants to accept the match
+                    # if there is a join command check if it is directed to this client
+                    # ask if the client wants to accept the match
                     accepted = await ainput(f'Accept match from {message.get("from", None)}? [y|n]\n')
+                    # if the match is accepted set opponent to the sender and send an acknowledgment to the opponent
                     if accepted == "y":
-                        print("ACCEPTED")
-                        #if the match is accepted set opponent to the sender and send an acknowledgment to the opponent
-                        await self._client.send({"to": message.get("from", None), "from": self._name, "cmd": "acc"})
+                        # let the joiner know the match has been accepted
+                        print("TEST: CLIENT REACH ERROR POINT")
+                        # message which is not sending
+                        await self._client.send({"from": self._name, "to": message.get("from", None), "cmd": "acc"})
                         self._opponent = message.get("from", None)
                     else:
                         await self._client.send({"to": message.get("from", None), "from": self._name, "cmd": "rej"})
-                elif cmd == "acc:" and self._name == message.get("to", None):
+                elif cmd == "acc" and self._name == message.get("to", None):
                     print("match request accepted")
                     self._clientTurn = False
                     self._opponent = message.get("from", None)
@@ -352,7 +354,8 @@ class terminal(ui):
 
                 # type check
                 try:
-                    column = int(input("Enter column number to drop counter: "))
+                    column = await ainput("Enter column number to drop counter: ")
+                    column = int(column)
                 except ValueError:
                     print("\n\n\n\nERROR: invalid input: expected integer")
                     continue
