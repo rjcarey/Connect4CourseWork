@@ -29,6 +29,7 @@ class gui(ui):
         self.__setupInProgress = False
         self.__typeChoiceInProgress = False
         self.__LANSetupInProgress = False
+        self.__hostInProgress = False
         self.__gameOver = False
         self.__animating = False
         
@@ -72,13 +73,28 @@ class gui(ui):
             console = Listbox(frame, height=3)
             console.pack(fill=X)
             self.__LANConsole = console
-            #self.__LANConsole.insert(END, f"1| ")
+            # self.__LANConsole.insert(END, f"1| ")
 
     def _hostGame(self):
-        pass
+        if not self.__hostInProgress:
+            self.__hostInProgress = True
+            hostWin = Toplevel(self.__root)
+            hostWin.title("Host")
+            frame = Frame(hostWin)
+            frame.pack()
+            self.__hostWin = hostWin
+
+            joinCode = ""
+            Label(frame, text=f"JOIN CODE: {joinCode}").pack(fill=X)
+            Button(frame, text="Back", command=self._dismissHost).pack(fill=X)
+
+    def _dismissHost(self):
+        self.__hostWin.destroy()
+        self.__hostInProgress = False
 
     def _attemptJoin(self):
-        pass
+        if not self.__hostInProgress:
+            pass
 
     def _dismissLANSetup(self):
         self.__LANSetupWin.destroy()
