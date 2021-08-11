@@ -5,6 +5,9 @@ from time import sleep
 from players import Ai
 from client import client
 from aioconsole import ainput
+from time import localtime, time
+from asyncio import sleep as s
+from asyncio import get_event_loop
 
 
 class hostError(Exception):
@@ -18,20 +21,28 @@ class ui(ABC):
 
 
 class gui(ui):
-    def __init__(self):
+    def __init__(self, network):
+        self._network = network
         root = Tk()
         root.title("ConnectFour")
         frame = Frame(root)
         frame.pack()
         self.__root = root
+        self.__running = False
         self.__gameInProgress = False
         self.__helpInProgress = False
         self.__setupInProgress = False
         self.__typeChoiceInProgress = False
         self.__LANSetupInProgress = False
-        self.__hostInProgress = False
+        self.__localInProgress = False
         self.__gameOver = False
         self.__animating = False
+        self._opponent = None
+        self.__opponentType = StringVar(value="Human")
+        self.__waitingForHost = False
+        self.__waitingForJoin = False
+        self.__waitingForMove = False
+        self.__client = client()
         
         Button(frame, text="Help", command=self._help).pack(fill=X)
         Button(frame, text="Play", command=self._gametype).pack(fill=X)
@@ -47,7 +58,8 @@ class gui(ui):
             self.__typeChoiceWin = typeChoiceWin
 
             Button(frame, text="Pass and Play", command=self._gameSetup).pack(fill=X)
-            Button(frame, text="Play Local Online", command=self._LANSetup).pack(fill=X)
+            if self._network:
+                Button(frame, text="Play Local Online", command=self._LANSetup).pack(fill=X)
             Button(frame, text="Dismiss", command=self._dismissTypeChoice).pack(fill=X)
 
     def _dismissTypeChoice(self):
@@ -64,6 +76,12 @@ class gui(ui):
             self.__LANSetupWin = LANSetupWin
             self.__joinCode = StringVar()
 
+            timeStamp = localtime(time())
+            clientCode = str(timeStamp[2])
+            clientCode += str(timeStamp[4])
+            clientCode += str(timeStamp[5])
+            self.__clientCode = clientCode
+
             Button(frame, text="Host", command=self._hostGame).pack(fill=X)
             Entry(frame, textvariable=self.__joinCode).pack(fill=X)
             Button(frame, text="Join", command=self._attemptJoin).pack(fill=X)
@@ -76,25 +94,30 @@ class gui(ui):
             # self.__LANConsole.insert(END, f"1| ")
 
     def _hostGame(self):
-        if not self.__hostInProgress:
-            self.__hostInProgress = True
+        if not self.__localInProgress and not self.__gameInProgress:
+            self.__localInProgress = True
             hostWin = Toplevel(self.__root)
             hostWin.title("Host")
             frame = Frame(hostWin)
             frame.pack()
             self.__hostWin = hostWin
 
-            joinCode = ""
-            Label(frame, text=f"JOIN CODE: {joinCode}").pack(fill=X)
+            Label(frame, text=f"JOIN CODE: {self.__clientCode}").pack(fill=X)
+            Label(frame, text="WAITING FOR OPPONENT...").pack(fill=X)
             Button(frame, text="Back", command=self._dismissHost).pack(fill=X)
+
+            self.__waitingForJoin = True
 
     def _dismissHost(self):
         self.__hostWin.destroy()
-        self.__hostInProgress = False
+        self.__localInProgress = False
 
     def _attemptJoin(self):
-        if not self.__hostInProgress:
-            pass
+        if not self.__localInProgress and not self.__gameInProgress:
+            self.__localInProgress = True
+            message = {"joinCode": self.__joinCode.get(), "from": self.__clientCode, "cmd": "hJoin"}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForHost = True
 
     def _dismissLANSetup(self):
         self.__LANSetupWin.destroy()
@@ -107,7 +130,6 @@ class gui(ui):
             setupWin.title("Game Setup")
             frame = Frame(setupWin)
             self.__setupWin = setupWin
-            self.__opponentType = StringVar()
             self.__opponent = None
 
             Grid.columnconfigure(self.__setupWin, 0, weight=1)
@@ -217,7 +239,8 @@ class gui(ui):
             self.__canvas = board
 
             #undo button
-            Button(gameWin, text="Undo", command=self._undoMove).grid(row=3, column=0, sticky=N+S+W+E)
+            if not self._network:
+                Button(gameWin, text="Undo", command=self._undoMove).grid(row=3, column=0, sticky=N+S+W+E)
             #dismiss button
             Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=4, column=0, sticky=N+S+W+E)
 
@@ -331,9 +354,53 @@ class gui(ui):
 
     def _quit(self):
         self.__root.quit()
-        
-    def run(self):
-        self.__root.mainloop()
+        self.__running = False
+
+    async def runClient(self):
+        await self.__client.run()
+
+    async def run(self):
+        # simulate mainloop so that the gui and client can both run
+        self.__running = True
+        while self.__running:
+            await s(0.1)
+            # substitute for tk.mainloop()
+            self.__root.update()
+            # wait for a message from the host
+            if self.__waitingForHost:
+                # while client doesnt have an opponent, wait for the host to reply with an accept
+                while not self._opponent:
+                    counter = 0
+                    message = await self.__client.recv()
+                    cmd = message.get("cmd", None)
+                    if cmd == "match" and message.get("to", None) == self.__clientCode:
+                        self._opponent = message.get("from", None)
+                        self.__localInProgress = False
+                        self._play()
+                    else:
+                        counter += 1
+                        if counter == 5:
+                            self.__waitingForHost = False
+                            self.__LANConsole.insert(END, f"{self.__LANConsole.size() + 1}| host not found...")
+                            if self.__LANConsole.size() > 3:
+                                self.__LANConsole.yview_scroll(1, UNITS)
+
+            # wait for a message from the joiner
+            elif self.__waitingForJoin:
+                # while client doesn't have an opponent, wait for someone to request a match
+                while not self._opponent:
+                    message = await self.__client.recv()
+                    cmd = message.get("cmd", None)
+                    if cmd == "hJoin" and message.get("joinCode", None) == self.__clientCode:
+                        self._opponent = message.get("from", None)
+                        await self.__client.send({"to": self._opponent, "from": self.__clientCode, "cmd": "match"})
+                        self.__waitingForJoin = False
+                        self.__localInProgress = False
+                        self._play()
+
+            elif self.__waitingForMove:
+                pass
+
 
 class terminal(ui):
     def __init__(self, network):

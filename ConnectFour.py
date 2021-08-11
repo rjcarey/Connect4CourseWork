@@ -3,7 +3,7 @@ from sys import argv
 from asyncio import run, create_task, gather
 
 def usage():
-    print(f"Error: Incorrect run command\nCommand: ConnectFour.py [g | t | tn]\ng : play with the GUI\nt : play with the Terminal\ntn : play LAN on the Terminal")
+    print(f"Error: Incorrect run command\nCommand: ConnectFour.py [g | t | tn | gn]\ng : play with the GUI\nt : play with the Terminal\ntn : play LAN on the Terminal\ngn : play LAN on the GUI")
     quit()
 
 async def startGame():
@@ -14,11 +14,15 @@ async def startGame():
             ui = terminal(network)
         elif argv[1] == "g":
             print("initialising gui mode...\n")
-            ui = gui()
+            ui = gui(network)
         elif argv[1] == "tn":
             print("initialising terminal LAN mode...\n")
             network = True
             ui = terminal(network)
+        elif argv[1] == "gn":
+            print("initialising gui LAN mode...\n")
+            network = True
+            ui = gui(network)
         else:
             usage()
     else:
@@ -31,7 +35,7 @@ async def startGame():
 
     if argv[1] == "t":
         while True:
-            choice = " "
+            choice = ""
             while choice != "y" and choice != "n":
                 try:
                     choice = input("y: Play Again\nn: Quit\nEnter [y|n]: ")
