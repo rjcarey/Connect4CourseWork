@@ -43,6 +43,7 @@ class gui(ui):
         self.__waitingForJoin = False
         self.__waitingForMove = False
         self.__client = client()
+        self._clientTurn = True
         
         Button(frame, text="Help", command=self._help).pack(fill=X)
         Button(frame, text="Play", command=self._gametype).pack(fill=X)
@@ -181,12 +182,16 @@ class gui(ui):
             Button(frame, text="Dismiss", command=self._dismissHelp).pack()
     
     def _play(self):
-        #print(self.__opponentType.get())
+        # print(self.__opponentType.get())
         if not self.__gameInProgress:
+            # if the opponent is not human, create an AI object
             if self.__opponentType.get() != "Human":
                 self.__opponent = Ai(self.__opponentType.get())
             self.__gameInProgress = True
+            # create a game object
             self.__game = game()
+
+            # create the game window
             gameWin = Toplevel(self.__root)
             gameWin.title("Game")
             frame = Frame(gameWin)
@@ -196,29 +201,37 @@ class gui(ui):
             Grid.rowconfigure(gameWin, 0, weight=1)
             frame.grid(row=0, column=0, sticky=N + S + W + E)
 
-            #console
+            # console
             console = Listbox(frame, height=3)
             console.grid(row=0, column=0, columnspan=4, sticky=E + W)
             self.__gameConsole = console
-            self.__gameConsole.insert(END, f"1| game against {self.__opponentType.get()}")
+            if self._network:
+                self.__gameConsole.insert(END, f"1| local game")
+            else:
+                self.__gameConsole.insert(END, f"1| game against {self.__opponentType.get()}")
 
-            #player turn label
+            # player turn label
             self.__playerTurn = StringVar()
-            if self.__opponentType.get() == "Human":
+            if self.__opponentType.get() == "Human" and not self._network:
                 self.__playerTurn.set('RED TO PLAY\nCHOOSE COLUMN')
+            elif self.__opponentType.get() == "Human" and self._network:
+                if self._clientTurn:
+                    self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
+                else:
+                    self.__playerTurn.set("OPPONENT'S TURN\nPLEASE WAIT")
             else:
                 self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
 
             Label(frame, textvariable=self.__playerTurn, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
 
-            #board
-            #Change tile to change board size
+            # board
+            # Change tile to change board size
             winWidth = self.__gameWin.winfo_screenwidth()
             if winWidth < 40:
-                #min board tile size
+                # min board tile size
                 winWidth = 40
             elif winWidth > 110:
-                #max board tile size
+                # max board tile size
                 winWidth = 110
             tile = winWidth
             counterSize = tile * 0.8
@@ -228,23 +241,24 @@ class gui(ui):
             baseX1 = tile / 10
             baseY1 = tile / 10
             baseX2 = baseX1 + counterSize
-            baseY2 =baseY1 + counterSize
+            baseY2 = baseY1 + counterSize
             self.__spaces = [[None for _ in range(7)] for _ in range(6)]
             for row in range(6):
                 for column in range(7):
                     # create white circles on blue background
-                    oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill="white")#, dash=(7,1,1,1)
+                    oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill="white")# , dash=(7,1,1,1)
                     self.__spaces[row][column] = oval
             board.grid(row=1, column=0)
             self.__canvas = board
 
-            #undo button
+            # undo button
             if not self._network:
                 Button(gameWin, text="Undo", command=self._undoMove).grid(row=3, column=0, sticky=N+S+W+E)
-            #dismiss button
+
+            # dismiss button
             Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=4, column=0, sticky=N+S+W+E)
 
-            #column buttons
+            # column buttons
             for col in range(7):
                 t = StringVar()
                 t.set(col + 1)
@@ -272,43 +286,64 @@ class gui(ui):
                 self.__gameConsole.yview_scroll(1, UNITS)
 
     def __playMove(self, col):
-        if self.__animating:
+        # if a counter is falling or the client is waiting for the opponent to move, print a wait message
+        if self.__animating or not self._clientTurn:
             self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
             if self.__gameConsole.size() > 3:
                 self.__gameConsole.yview_scroll(1, UNITS)
+
+        # if the game isn't won and its the client's move
         elif not self.__game.getWinner:
             try:
+                # set the counter colour
                 counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
+                # play the counter
                 row = 5 - self.__game.play(col + 1)
-                #animate counter
+                # if playing a networked game send the move to the opponent
+                if self._network:
+                    message = {"to": self._opponent, "from": self.__clientCode, "cmd": "move", "col": col}
+                    get_event_loop().create_task(self.__client.send(message))
+                # animate the counter
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
-                #change turn display
-                if self.__opponentType.get() == "Human":
+                # change turn display
+                if self.__opponentType.get() == "Human" and not self._network:
+                    # if its pass and play, use the counter colour to say whose turn it is
                     counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+                elif self.__opponentType.get() == "Human" and self._network:
+                    # if it is a networked game, flip whose turn
+                    self._clientTurn = True if not self._clientTurn else False
+                    if self._clientTurn:
+                        self.__playerTurn.set(f'YOUR TURN\nCHOOSE COLUMN')
+                        self.__waitingForMove = False
+                    else:
+                        self.__playerTurn.set(f'OPPONENTS TURN\nPLEASE WAIT')
+                        self.__waitingForMove = True
                 else:
+                    # if it's a game against AI tell the player it's the AI's turn
                     self.__playerTurn.set(f'OPPONENTS TURN\nPLEASE WAIT')
             except gameError as e:
-                #print error message to console
+                # print error message to console
                 self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
-                #scroll console if needed
+                # scroll console if needed
                 if self.__gameConsole.size() > 3:
                     self.__gameConsole.yview_scroll(1, UNITS)
-            #check if played winning move
+            # check if played winning move
             self.__checkIfWon()
 
+            # if it's a game against the AI, play the AI's move
             if self.__opponentType.get() != "Human" and not self.__game.getWinner:
-                #AI move
+                # AI move
                 counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
                 col = self.__opponent.getColumn(self.__game.Board, self.__game.getPlayer)
                 row = 5 - self.__game.play(col + 1)
-                #animate drop
+                # animate drop
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
-                #change turn display
+                # change turn display
                 self.__playerTurn.set(f'YOUR TURN\nCHOOSE COLUMN')
-                #check if played a winning move
+                # check if played a winning move
                 self.__checkIfWon()
 
     def __checkIfWon(self):
@@ -376,6 +411,13 @@ class gui(ui):
                     if cmd == "match" and message.get("to", None) == self.__clientCode:
                         self._opponent = message.get("from", None)
                         self.__localInProgress = False
+                        # if int(self.__clientCode) % int(self.__clientCode[4:]) > int(self._opponent) % int(self._opponent[4:]):
+                        if self.__clientCode > self._opponent:
+                            self._clientTurn = True
+                            self.__waitingForMove = False
+                        else:
+                            self._clientTurn = False
+                            self.__waitingForMove = True
                         self._play()
                     else:
                         counter += 1
@@ -396,10 +438,22 @@ class gui(ui):
                         await self.__client.send({"to": self._opponent, "from": self.__clientCode, "cmd": "match"})
                         self.__waitingForJoin = False
                         self.__localInProgress = False
+                        # if int(self.__clientCode) % int(self.__clientCode[4:]) > int(self._opponent) % int(self._opponent[4:]):
+                        if self.__clientCode > self._opponent:
+                            self._clientTurn = True
+                            self.__waitingForMove = False
+                        else:
+                            self._clientTurn = False
+                            self.__waitingForMove = True
                         self._play()
 
-            elif self.__waitingForMove:
-                pass
+            if self.__waitingForMove:
+                # if waiting for move, wait for a move message from the opponent and play the move
+                while self.__waitingForMove:
+                    message = await self.__client.recv()
+                    cmd = message.get("cmd", None)
+                    if cmd == "move" and message.get("to", None) == self.__clientCode:
+                        self.__playMove(message.get("col", None))
 
 
 class terminal(ui):
