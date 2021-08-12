@@ -35,6 +35,7 @@ class gui(ui):
         self.__typeChoiceInProgress = False
         self.__LANSetupInProgress = False
         self.__localInProgress = False
+        self.__saveInProgress = False
         self.__gameOver = False
         self.__animating = False
         self._opponent = None
@@ -272,7 +273,36 @@ class gui(ui):
                 Grid.columnconfigure(frame, col, weight=1)
 
     def _saveAndExit(self):
+        if not self.__saveInProgress:
+            self.__saveInProgress = True
+            saveWin = Toplevel(self.__root)
+            saveWin.title("Save and Exit")
+            frame = Frame(saveWin)
+            frame.pack()
+            self.__saveWin = saveWin
+
+            gameName = StringVar()
+
+            # instruction
+            Label(frame, text=f"ENTER GAME NAME BELOW").pack(fill=X)
+            # text entry
+            Entry(frame, textvariable=gameName).pack(fill=X)
+            # save button
+            Button(frame, text="Save", command=self._saveGame).pack(fill=X)
+            # console
+            console = Listbox(frame, height=3)
+            console.pack(fill=X)
+            self.__saveConsole = console
+            # self.__saveConsole.insert(END, f"1| ")
+            # cancel button
+            Button(frame, text="Cancel", command=self._cancelSave).pack(fill=X)
+
+    def _saveGame(self):
         pass
+
+    def _cancelSave(self):
+        self.__saveWin.destroy()
+        self.__saveInProgress = False
 
     def _undoMove(self):
         if not self.__gameOver and self.__opponentType.get() == "Human":
