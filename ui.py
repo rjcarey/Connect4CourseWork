@@ -251,12 +251,14 @@ class gui(ui):
             board.grid(row=1, column=0)
             self.__canvas = board
 
-            # undo button
             if not self._network:
+                # undo button
                 Button(gameWin, text="Undo", command=self._undoMove).grid(row=3, column=0, sticky=N+S+W+E)
+                # save and exit button
+                Button(gameWin, text="Save and Exit", command=self._saveAndExit).grid(row=4, column=0, sticky=N+S+W+E)
 
             # dismiss button
-            Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=4, column=0, sticky=N+S+W+E)
+            Button(gameWin, text="Dismiss", command=self._dismissGame).grid(row=5, column=0, sticky=N+S+W+E)
 
             # column buttons
             for col in range(7):
@@ -268,6 +270,9 @@ class gui(ui):
             # resizing
             for col in range(7):
                 Grid.columnconfigure(frame, col, weight=1)
+
+    def _saveAndExit(self):
+        pass
 
     def _undoMove(self):
         if not self.__gameOver and self.__opponentType.get() == "Human":
