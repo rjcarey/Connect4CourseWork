@@ -1,3 +1,6 @@
+import sqlite3
+
+
 class gameError(Exception):
     pass
 
@@ -121,3 +124,21 @@ class game:
             return lastRow, lastCol
         else:
             raise gameError("no moves to undo...")
+
+    def save(self, name):
+        # connect to database
+        connection = sqlite3.connect('savedGames.db')
+
+        # get a string of the moves
+        moves = ""
+        for move in self._Played:
+            moves += str(move[1])
+
+        # add game to database
+        sql = f"""INSERT INTO SAVES (NAME,MOVES,TURN)
+              VALUES ('{name.get()}', '{moves}', '{self._Player}')"""
+        connection.execute(sql)
+        connection.commit()
+
+        # close connection
+        connection.close()

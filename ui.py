@@ -8,6 +8,7 @@ from aioconsole import ainput
 from time import localtime, time
 from asyncio import sleep as s
 from asyncio import get_event_loop
+from sqlite3 import IntegrityError
 
 
 class hostError(Exception):
@@ -273,7 +274,12 @@ class gui(ui):
                 Grid.columnconfigure(frame, col, weight=1)
 
     def _saveAndExit(self):
-        if not self.__saveInProgress:
+        # if a counter is falling print a wait message
+        if self.__animating:
+            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
+            if self.__gameConsole.size() > 3:
+                self.__gameConsole.yview_scroll(1, UNITS)
+        elif not self.__saveInProgress:
             self.__saveInProgress = True
             saveWin = Toplevel(self.__root)
             saveWin.title("Save and Exit")
@@ -281,12 +287,12 @@ class gui(ui):
             frame.pack()
             self.__saveWin = saveWin
 
-            gameName = StringVar()
+            self.__gameName = StringVar()
 
             # instruction
             Label(frame, text=f"ENTER GAME NAME BELOW").pack(fill=X)
             # text entry
-            Entry(frame, textvariable=gameName).pack(fill=X)
+            Entry(frame, textvariable=self.__gameName).pack(fill=X)
             # save button
             Button(frame, text="Save", command=self._saveGame).pack(fill=X)
             # console
@@ -298,7 +304,16 @@ class gui(ui):
             Button(frame, text="Cancel", command=self._cancelSave).pack(fill=X)
 
     def _saveGame(self):
-        pass
+        # try to save
+        try:
+            self.__game.save(self.__gameName)
+            self._cancelSave()
+            self._dismissGame()
+        # if the name is not unique, print an error message
+        except IntegrityError:
+            self.__saveConsole.insert(END, f"{self.__saveConsole.size() + 1}| name taken, try again...")
+            if self.__saveConsole.size() > 3:
+                self.__saveConsole.yview_scroll(1, UNITS)
 
     def _cancelSave(self):
         self.__saveWin.destroy()
