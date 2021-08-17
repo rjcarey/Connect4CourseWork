@@ -64,7 +64,11 @@ class gui(ui):
             Button(frame, text="Pass and Play", command=self._gameSetup).pack(fill=X)
             if self._network:
                 Button(frame, text="Play Local Online", command=self._LANSetup).pack(fill=X)
+            Button(frame, text="Puzzles", command=self._puzzleSetup).pack(fill=X)
             Button(frame, text="Dismiss", command=self._dismissTypeChoice).pack(fill=X)
+
+    def _puzzleSetup(self):
+        pass
 
     def _dismissTypeChoice(self):
         self.__typeChoiceWin.destroy()
