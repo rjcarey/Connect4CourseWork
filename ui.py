@@ -38,6 +38,7 @@ class gui(ui):
         self.__localInProgress = False
         self.__saveInProgress = False
         self.__loadInProgress = False
+        self.__puzzleSetupInProgress = False
         self.__gameOver = False
         self.__animating = False
         self._opponent = None
@@ -68,7 +69,38 @@ class gui(ui):
             Button(frame, text="Dismiss", command=self._dismissTypeChoice).pack(fill=X)
 
     def _puzzleSetup(self):
+        if not self.__puzzleSetupInProgress:
+            self.__puzzleSetupInProgress = True
+            puzzleSetupWin = Toplevel(self.__root)
+            puzzleSetupWin.title("Puzzle Setup")
+            frame = Frame(puzzleSetupWin)
+            frame.pack()
+            self.__puzzleSetupWin = puzzleSetupWin
+
+            self.__puzzleCode = StringVar()
+
+            Button(frame, text="Create", command=self._puzzleCreate).pack(fill=X)
+            Button(frame, text="Random", command=self._puzzleRandom).pack(fill=X)
+            Entry(frame, textvariable=self.__puzzleCode).pack(fill=X)
+            Button(frame, text="Load", command=self._puzzleLoad).pack(fill=X)
+            Button(frame, text="Dismiss", command=self._dismissPuzzleSetup).pack(fill=X)
+
+            console = Listbox(frame, height=3)
+            console.pack(fill=X)
+            self.__puzzleSetupConsole = console
+
+            self.__puzzleSetupConsole.insert(END, f"1| enter code to load")
+
+    def _puzzleCreate(self):
         pass
+    def _puzzleRandom(self):
+        pass
+    def _puzzleLoad(self):
+        pass
+
+    def _dismissPuzzleSetup(self):
+        self.__puzzleSetupWin.destroy()
+        self.__puzzleSetupInProgress = False
 
     def _dismissTypeChoice(self):
         self.__typeChoiceWin.destroy()
