@@ -37,6 +37,7 @@ class gui(ui):
         self.__LANSetupInProgress = False
         self.__localInProgress = False
         self.__saveInProgress = False
+        self.__loadInProgress = False
         self.__gameOver = False
         self.__animating = False
         self._opponent = None
@@ -157,7 +158,7 @@ class gui(ui):
             opponentDropDown.grid(row=0, column=1, sticky=N)
 
             # load button
-            Button(frame, text="Load", command=self._loadGame).grid(row=1, column=0, columnspan=2)
+            Button(frame, text="Load", command=self._load).grid(row=1, column=0, columnspan=2)
 
             # play button
             Button(frame, text="Play", command=self._play).grid(row=2, column=0, columnspan=2)
@@ -169,8 +170,37 @@ class gui(ui):
         self.__setupWin.destroy()
         self.__setupInProgress = False
 
+    def _load(self):
+        if not self.__loadInProgress and not self.__gameInProgress:
+            self.__loadInProgress = True
+            loadWin = Toplevel(self.__root)
+            loadWin.title("Load Game")
+            frame = Frame(loadWin)
+            frame.pack()
+            self.__loadWin = loadWin
+
+            self.__loadName = StringVar()
+
+            # instruction
+            Label(frame, text=f"ENTER GAME NAME BELOW").pack(fill=X)
+            # text entry
+            Entry(frame, textvariable=self.__loadName).pack(fill=X)
+            # save button
+            Button(frame, text="Save", command=self._loadGame).pack(fill=X)
+            # console
+            console = Listbox(frame, height=3)
+            console.pack(fill=X)
+            self.__loadConsole = console
+            # self.__loadConsole.insert(END, f"1| ")
+            # cancel button
+            Button(frame, text="Cancel", command=self._cancelLoad).pack(fill=X)
+
     def _loadGame(self):
         pass
+
+    def _cancelLoad(self):
+        self.__loadWin.destroy()
+        self.__loadInProgress = False
 
     def _help(self):
         if not self.__helpInProgress:
