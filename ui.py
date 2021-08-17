@@ -139,7 +139,7 @@ class gui(ui):
             Grid.rowconfigure(self.__setupWin, 0, weight=1)
             frame.grid(row=0, column=0, sticky=N + S + W + E)
 
-            #first player
+            # first player
             '''
             Label(frame, text="Choose Player 1:").grid(row=0)
             Label(frame, text="RED").grid(row=1, column=0)
@@ -149,22 +149,28 @@ class gui(ui):
             #self._firstTurn = turnSlider.get()
             '''
 
-            #opponent
+            # opponent
             Label(frame, text="Choose Opponent:").grid(row=0, column=0)
             options = ["Human", "Practice AI", "Easy AI", "Medium AI", "Hard AI"]
             self.__opponentType.set("Human")
             opponentDropDown = OptionMenu(self.__setupWin, self.__opponentType, *options)
             opponentDropDown.grid(row=0, column=1, sticky=N)
 
-            #play button
-            Button(frame, text="Play", command=self._play).grid(row=1, column=0, columnspan=2)
+            # load button
+            Button(frame, text="Load", command=self._loadGame).grid(row=1, column=0, columnspan=2)
 
-            #back button
-            Button(frame, text="Back", command=self._dismissSetup).grid(row=2, column=0, columnspan=2)
+            # play button
+            Button(frame, text="Play", command=self._play).grid(row=2, column=0, columnspan=2)
+
+            # back button
+            Button(frame, text="Back", command=self._dismissSetup).grid(row=3, column=0, columnspan=2)
 
     def _dismissSetup(self):
         self.__setupWin.destroy()
         self.__setupInProgress = False
+
+    def _loadGame(self):
+        pass
 
     def _help(self):
         if not self.__helpInProgress:
