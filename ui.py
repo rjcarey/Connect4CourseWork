@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, HORIZONTAL, Scale, LEFT, RIGHT, OptionMenu, Entry
-from game import game, gameError
+from game import game, gameError, nameError
 from time import sleep
 from players import Ai
 from client import client
@@ -166,6 +166,9 @@ class gui(ui):
             # back button
             Button(frame, text="Back", command=self._dismissSetup).grid(row=3, column=0, columnspan=2)
 
+            # create a game object
+            self.__game = game()
+
     def _dismissSetup(self):
         self.__setupWin.destroy()
         self.__setupInProgress = False
@@ -186,7 +189,7 @@ class gui(ui):
             # text entry
             Entry(frame, textvariable=self.__loadName).pack(fill=X)
             # save button
-            Button(frame, text="Save", command=self._loadGame).pack(fill=X)
+            Button(frame, text="Load", command=self._loadGame).pack(fill=X)
             # console
             console = Listbox(frame, height=3)
             console.pack(fill=X)
@@ -196,7 +199,19 @@ class gui(ui):
             Button(frame, text="Cancel", command=self._cancelLoad).pack(fill=X)
 
     def _loadGame(self):
-        pass
+        try:
+            opponent = self.__game.load(self.__loadName.get())
+            self.__opponentType.set(opponent)
+            self.__loadWin.destroy()
+            self.__loadInProgress = False
+            self._play()
+        except nameError as e:
+            # print error message to console
+            self.__loadConsole.insert(END, f"{self.__loadConsole.size() + 1}| {e}")
+            # scroll console if needed
+            if self.__loadConsole.size() > 3:
+                self.__loadConsole.yview_scroll(1, UNITS)
+
 
     def _cancelLoad(self):
         self.__loadWin.destroy()
@@ -226,8 +241,6 @@ class gui(ui):
             if self.__opponentType.get() != "Human":
                 self.__opponent = Ai(self.__opponentType.get())
             self.__gameInProgress = True
-            # create a game object
-            self.__game = game()
 
             # create the game window
             gameWin = Toplevel(self.__root)
@@ -251,7 +264,8 @@ class gui(ui):
             # player turn label
             self.__playerTurn = StringVar()
             if self.__opponentType.get() == "Human" and not self._network:
-                self.__playerTurn.set('RED TO PLAY\nCHOOSE COLUMN')
+                counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
             elif self.__opponentType.get() == "Human" and self._network:
                 if self._clientTurn:
                     self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
@@ -283,8 +297,15 @@ class gui(ui):
             self.__spaces = [[None for _ in range(7)] for _ in range(6)]
             for row in range(6):
                 for column in range(7):
-                    # create white circles on blue background
-                    oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill="white")# , dash=(7,1,1,1)
+                    # create counter slots
+                    space = self.__game.getSpace(row, column)
+                    if space == game.PONE:
+                        counterColour = "red"
+                    elif space == game.PTWO:
+                        counterColour = "#e6e600"
+                    else:
+                        counterColour = "white"
+                    oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill=counterColour)# , dash=(7,1,1,1)
                     self.__spaces[row][column] = oval
             board.grid(row=1, column=0)
             self.__canvas = board
@@ -342,7 +363,7 @@ class gui(ui):
     def _saveGame(self):
         # try to save
         try:
-            self.__game.save(self.__gameName)
+            self.__game.save(self.__gameName.get(), self.__opponentType.get())
             self._cancelSave()
             self._dismissGame()
         # if the name is not unique, print an error message

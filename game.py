@@ -5,6 +5,10 @@ class gameError(Exception):
     pass
 
 
+class nameError(Exception):
+    pass
+
+
 class game:
 
     EMPTY = " "
@@ -125,7 +129,7 @@ class game:
         else:
             raise gameError("no moves to undo...")
 
-    def save(self, name):
+    def save(self, name, opponent):
         # connect to database
         connection = sqlite3.connect('savedGames.db')
 
@@ -135,10 +139,27 @@ class game:
             moves += str(move[1])
 
         # add game to database
-        sql = f"""INSERT INTO SAVES (NAME,MOVES,TURN)
-              VALUES ('{name.get()}', '{moves}', '{self._Player}')"""
+        sql = f"""INSERT INTO SAVES (NAME,MOVES,OPPONENT)
+              VALUES ('{name}', '{moves}', '{opponent}')"""
         connection.execute(sql)
         connection.commit()
 
         # close connection
         connection.close()
+
+    def load(self, name):
+        connection = sqlite3.connect('savedGames.db')
+        sql = f"SELECT NAME, MOVES, OPPONENT from SAVES WHERE NAME == '{name}'"
+        gameInfo = connection.execute(sql)
+        name, moves, opponent = None, None, None
+        for row in gameInfo:
+            name, moves, opponent = row
+        if moves:
+            for move in moves:
+                self.play(int(move)+1)
+            return opponent
+        else:
+            raise nameError("name invalid...")
+
+    def getSpace(self, row, column):
+        return self.Board[row][column]
