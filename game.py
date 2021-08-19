@@ -1,4 +1,5 @@
 import sqlite3
+from random import randint
 
 
 class gameError(Exception):
@@ -157,9 +158,52 @@ class game:
         if moves:
             for move in moves:
                 self.play(int(move)+1)
+            connection.close()
             return opponent
         else:
+            connection.close()
             raise nameError("name invalid...")
+
+    def loadPuzzle(self, puzzleCode):
+        connection = sqlite3.connect('savedGames.db')
+        if puzzleCode == "random":
+            # get random puzzle
+            sql = f"SELECT * from PUZZLES"
+            puzzleInfo = connection.execute(sql)
+            results = puzzleInfo.fetchall()
+            puzzleCode = results[randint(0, len(results)-1)][0]
+        sql = f"SELECT ID, MOVES, SOLUTION from PUZZLES WHERE ID == '{puzzleCode}'"
+        puzzleInfo = connection.execute(sql)
+        ID, moves, solution = None, None, None
+        for row in puzzleInfo:
+            ID, moves, solution = row
+        if moves:
+            for move in moves:
+                self.play(int(move)+1)
+            connection.close()
+            self._Played = []
+            return solution, ID
+        else:
+            connection.close()
+            raise nameError("ID invalid...")
+
+    def savePuzzle(self, ID, solution):
+        # connect to database
+        connection = sqlite3.connect('savedGames.db')
+
+        # get a string of the moves
+        moves = ""
+        for move in self._Played:
+            moves += str(move[1])
+
+        # add game to database
+        sql = f"""INSERT INTO PUZZLES (ID,MOVES,SOLUTION)
+                      VALUES ('{ID}', '{moves}', '{solution}')"""
+        connection.execute(sql)
+        connection.commit()
+
+        # close connection
+        connection.close()
 
     def getSpace(self, row, column):
         return self.Board[row][column]

@@ -39,6 +39,7 @@ class gui(ui):
         self.__saveInProgress = False
         self.__loadInProgress = False
         self.__puzzleSetupInProgress = False
+        self.__puzzleInProgress = False
         self.__gameOver = False
         self.__animating = False
         self._opponent = None
@@ -89,14 +90,226 @@ class gui(ui):
             console.pack(fill=X)
             self.__puzzleSetupConsole = console
 
-            self.__puzzleSetupConsole.insert(END, f"1| enter code to load")
+            self.__puzzleSetupConsole.insert(END, f"1| enter ID to load")
+            self.__game = game()
 
     def _puzzleCreate(self):
-        pass
+        self._puzzleGame(create=True)
+
     def _puzzleRandom(self):
-        pass
+        self.__puzzleCode.set("random")
+        self._puzzleLoad()
+
     def _puzzleLoad(self):
-        pass
+        try:
+            self.__puzzleSolution, self.__puzzleCode = self.__game.loadPuzzle(self.__puzzleCode.get())
+            self._puzzleGame()
+        except nameError as e:
+            # print error message to console
+            self.__puzzleSetupConsole.insert(END, f"{self.__puzzleSetupConsole.size() + 1}| {e}")
+            # scroll console if needed
+            if self.__puzzleSetupConsole.size() > 3:
+                self.__puzzleSetupConsole.yview_scroll(1, UNITS)
+
+    def _puzzleGame(self, create=False):
+        if not self.__puzzleInProgress:
+            self._dismissPuzzleSetup()
+            self.__puzzleInProgress = True
+
+            # create the puzzle window
+            puzzleWin = Toplevel(self.__root)
+            puzzleWin.title("Puzzle")
+            frame = Frame(puzzleWin)
+            self.__puzzleWin = puzzleWin
+
+            Grid.columnconfigure(puzzleWin, 0, weight=1)
+            Grid.rowconfigure(puzzleWin, 0, weight=1)
+            frame.grid(row=0, column=0, sticky=N + S + W + E)
+
+            # console
+            console = Listbox(frame, height=3)
+            console.grid(row=0, column=0, columnspan=4, sticky=E + W)
+            self.__gameConsole = console
+
+            # instruction label
+            if create:
+                t = "PUT IN SOME COUNTERS, ENTER A PUZZLE ID THEN SAVE"
+            else:
+                t = "PLAY THE BEST MOVE POSSIBLE"
+            Label(frame, text=t, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
+
+            # board
+            # Change tile to change board size
+            winWidth = self.__puzzleWin.winfo_screenwidth()
+            if winWidth < 40:
+                # min board tile size
+                winWidth = 40
+            elif winWidth > 110:
+                # max board tile size
+                winWidth = 110
+            tile = winWidth
+            counterSize = tile * 0.8
+            boardWidth = 7 * tile
+            boardHeight = 6 * tile
+            board = Canvas(puzzleWin, width=boardWidth, height=boardHeight, bg='blue')
+            baseX1 = tile / 10
+            baseY1 = tile / 10
+            baseX2 = baseX1 + counterSize
+            baseY2 = baseY1 + counterSize
+            self.__spaces = [[None for _ in range(7)] for _ in range(6)]
+            for row in range(6):
+                for column in range(7):
+                    # create counter slots
+                    space = self.__game.getSpace(row, column)
+                    if space == game.PONE:
+                        counterColour = "red"
+                    elif space == game.PTWO:
+                        counterColour = "#e6e600"
+                    else:
+                        counterColour = "white"
+                    oval = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
+                    self.__spaces[row][column] = oval
+            board.grid(row=1, column=0)
+            self.__canvas = board
+
+            self.__puzzleID = StringVar()
+
+            if create:
+                self.__creative = True
+                # puzzle id entry
+                Entry(frame, textvariable=self.__puzzleID).grid(row=3, column=0, sticky=N + S + W + E)
+                # save button
+                Button(puzzleWin, text="Save", command=self._savePuzzle).grid(row=4, column=0, sticky=N + S + W + E)
+            else:
+                self.__creative = False
+                # puzzle id label
+                Label(puzzleWin, text=f"ID: {self.__puzzleCode}").grid(row=3, column=0, sticky=N + S + W + E)
+                # solve button
+                Button(puzzleWin, text="Solve", command=self._solvePuzzle).grid(row=4, column=0, sticky=N + S + W + E)
+            # undo button
+            Button(puzzleWin, text="Undo", command=self._undoMove).grid(row=5, column=0, sticky=N + S + W + E)
+            # exit button
+            Button(puzzleWin, text="Exit", command=self._exitPuzzle).grid(row=6, column=0, sticky=N + S + W + E)
+
+            # column buttons
+            for col in range(7):
+                t = StringVar()
+                t.set(col + 1)
+                cmd = lambda c=col: self.__playPuzzleMove(c)
+                Button(frame, textvariable=t, command=cmd).grid(row=1, column=col, sticky=N + S + W + E)
+
+            # resizing
+            for col in range(7):
+                Grid.columnconfigure(frame, col, weight=1)
+
+            self._puzzleOver = False
+
+    def __playPuzzleMove(self, col):
+        # if a counter is falling print a wait message
+        if self.__animating:
+            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
+            if self.__gameConsole.size() > 3:
+                self.__gameConsole.yview_scroll(1, UNITS)
+        # if the game isn't won
+        elif not self._puzzleOver:
+            try:
+                # set the counter colour
+                counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
+                # play the counter
+                row = 5 - self.__game.play(col + 1)
+                # animate the counter
+                self.__animatedDrop(row, col, counter)
+                self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+            except gameError as e:
+                # print error message to console
+                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
+                # scroll console if needed
+                if self.__gameConsole.size() > 3:
+                    self.__gameConsole.yview_scroll(1, UNITS)
+            if not self.__creative:
+                # check if played winning move
+                self._puzzleOver = True
+                # if the player played the solution move call the popup
+                if col == self.__puzzleSolution:
+                    self._puzzleWin()
+                # else, let the player know they played the wrong move
+                else:
+                    self._puzzleLose()
+        elif self._puzzleOver:
+            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| undo move or exit...")
+            if self.__gameConsole.size() > 3:
+                self.__gameConsole.yview_scroll(1, UNITS)
+
+    def _puzzleWin(self):
+        solvedWin = Toplevel(self.__root)
+        solvedWin.title("Solved")
+        frame = Frame(solvedWin)
+        frame.pack()
+        self.__solvedWin = solvedWin
+
+        Label(frame, text=f"CORRECT MOVE!").pack(fill=X)
+        Label(frame, text="WELL DONE!").pack(fill=X)
+        Button(frame, text="Exit", command=self._exitSolved).pack(fill=X)
+
+    def _puzzleLose(self):
+        loseWin = Toplevel(self.__root)
+        loseWin.title("Solved")
+        frame = Frame(loseWin)
+        frame.pack()
+        self.__loseWin = loseWin
+
+        Label(frame, text=f"INCORRECT MOVE!").pack(fill=X)
+        Label(frame, text="UNDO OR EXIT").pack(fill=X)
+        Button(frame, text="Exit", command=self._exitLost).pack(fill=X)
+
+    def _exitLost(self):
+        self.__loseWin.destroy()
+
+    def _exitSolved(self):
+        self.__solvedWin.destroy()
+
+    def _savePuzzle(self):
+        # get solution
+        solution = self._solvePuzzle(saving=True)
+
+        # get id
+        ID = self.__puzzleID.get()
+
+        # try to save
+        try:
+            self.__game.savePuzzle(ID,solution)
+            self._exitPuzzle()
+        # if the name is not unique, print an error message
+        except IntegrityError:
+            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| ID taken, try again...")
+            if self.__gameConsole.size() > 3:
+                self.__gameConsole.yview_scroll(1, UNITS)
+
+    def _solvePuzzle(self, saving=False):
+        if not self._puzzleOver:
+            # create computer to get best move
+            computer = Ai("Easy AI") #"Hard AI"
+            # get best move
+            column = computer.getColumn(self.__game.Board, self.__game.getPlayer)
+            # if saving, return the column to be saved in the database
+            if saving:
+                return column
+            # otherwise,
+            else:
+                # play move
+                counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
+                row = 5 - self.__game.play(column + 1)
+                # animate drop
+                self.__animatedDrop(row, column, counter)
+                self.__canvas.itemconfig(self.__spaces[row][column], fill=counter)
+                # highlight solution
+                counter = "#ff9999" if not self.__game.getPlayer == game.PONE else "#ffffb3"
+                self.__canvas.itemconfig(self.__spaces[row][column], fill=counter)
+                self._puzzleOver = True
+
+    def _exitPuzzle(self):
+        self.__puzzleWin.destroy()
+        self.__puzzleInProgress = False
 
     def _dismissPuzzleSetup(self):
         self.__puzzleSetupWin.destroy()
@@ -247,7 +460,6 @@ class gui(ui):
             # scroll console if needed
             if self.__loadConsole.size() > 3:
                 self.__loadConsole.yview_scroll(1, UNITS)
-
 
     def _cancelLoad(self):
         self.__loadWin.destroy()
@@ -417,8 +629,11 @@ class gui(ui):
             try:
                 row, col = self.__game.undo()
                 self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
-                counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
-                self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+                if not self.__puzzleInProgress:
+                    counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                    self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+                else:
+                    self._puzzleOver = False
             except gameError as e:
                 self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
                 if self.__gameConsole.size() > 3:
