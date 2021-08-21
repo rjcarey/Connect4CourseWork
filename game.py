@@ -17,11 +17,15 @@ class game:
     PTWO = "⍟"
     
     def __init__(self):
+        # store the board
         self.Board = [[game.EMPTY for _ in range(7)] for _ in range(6)]
+        # and whose turn it is
         self._Player = game.PONE
+        # and the moves that are played in order
         self._Played = []
 
     def __repr__(self):
+        # create a board display to be called when the object is printed
         board = game.EMPTY
         for column in range(1, 8):
             board += f"{column} "
@@ -36,6 +40,7 @@ class game:
     
     @property
     def getPlayer(self):
+        # return whose turn it is
         return self._Player
 
     @property
@@ -105,29 +110,43 @@ class game:
 
     @property
     def getWinner(self):
+        # return the winner of the game and the winning run of counters
         winner, run = self.getRun
         return winner
 
     def play(self, column):
+        # change column number into an index
         col = column - 1
         if self.Board[0][col] != game.EMPTY:
+            # if the column is full, raise an error
             raise gameError("column full, play again...")
         for i, row in enumerate(reversed(self.Board)):
+            # for each slot in the column (from bottom to top) if the slot is empty, place a counter there
             if row[col] == game.EMPTY:
+                # set the space to the counter
                 row[col] = self._Player
                 playedRow = i
+                # add the coordinates to the list of played moves
                 self._Played.append((5 - playedRow, col))
                 break
+        # flip the turn
         self._Player = game.PTWO if self._Player == game.PONE else game.PONE
+        # return which row was played in
         return playedRow
 
     def undo(self):
+        # if at least one move has been played
         if self._Played:
+            # get the coordinates of the last move
             lastRow, lastCol = self._Played.pop()
+            # set the slot to be empty
             self.Board[lastRow][lastCol] = game.EMPTY
+            # flip the turn
             self._Player = game.PTWO if self._Player == game.PONE else game.PONE
+            # return the coordinates of the last move
             return lastRow, lastCol
         else:
+            # if there are no moves to undo, raise an error message
             raise gameError("no moves to undo...")
 
     def save(self, name, opponent):
@@ -150,40 +169,49 @@ class game:
 
     def load(self, name):
         connection = sqlite3.connect('savedGames.db')
+        # get the game info of the game identified by the name
         sql = f"SELECT NAME, MOVES, OPPONENT from SAVES WHERE NAME == '{name}'"
         gameInfo = connection.execute(sql)
         name, moves, opponent = None, None, None
         for row in gameInfo:
             name, moves, opponent = row
+        # if the game return the move string, play the moves
         if moves:
             for move in moves:
                 self.play(int(move)+1)
             connection.close()
+            # return the opponent type
             return opponent
         else:
+            # if not then there was no saved game with this name so raise an error
             connection.close()
             raise nameError("name invalid...")
 
     def loadPuzzle(self, puzzleCode):
         connection = sqlite3.connect('savedGames.db')
         if puzzleCode == "random":
-            # get random puzzle
+            # get random puzzle id from the saved puzzles
             sql = f"SELECT * from PUZZLES"
             puzzleInfo = connection.execute(sql)
             results = puzzleInfo.fetchall()
             puzzleCode = results[randint(0, len(results)-1)][0]
+        # get the puzzle game info using the puzzle id
         sql = f"SELECT ID, MOVES, SOLUTION from PUZZLES WHERE ID == '{puzzleCode}'"
         puzzleInfo = connection.execute(sql)
         ID, moves, solution = None, None, None
         for row in puzzleInfo:
             ID, moves, solution = row
+        # if the game return the move string, play the moves
         if moves:
             for move in moves:
                 self.play(int(move)+1)
             connection.close()
+            # reset the played moves
             self._Played = []
+            # return the solution move and the id of the puzzle
             return solution, ID
         else:
+            # if not then there was no saved puzzle with this id so raise an error
             connection.close()
             raise nameError("ID invalid...")
 
@@ -206,4 +234,5 @@ class game:
         connection.close()
 
     def getSpace(self, row, column):
+        # return the counter at coordinates passed in
         return self.Board[row][column]
