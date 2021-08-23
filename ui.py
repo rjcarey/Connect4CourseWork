@@ -89,7 +89,11 @@ class gui(ui):
 
             Button(frame, text="Help", command=self._help).pack(fill=X)
             Button(frame, text="Play", command=self._gametype).pack(fill=X)
-            Button(frame, text="Quit", command=self._quit).pack(fill=X)
+            Button(frame, text="Dismiss", command=self._dismissMenu).pack(fill=X)
+
+    def _dismissMenu(self):
+        self.__menuWin.destroy()
+        self.__inMenu = False
 
     def _gametype(self):
         if not self.__typeChoiceInProgress:
