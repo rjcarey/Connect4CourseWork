@@ -151,7 +151,7 @@ class game:
 
     def save(self, name, opponent):
         # connect to database
-        connection = sqlite3.connect('savedGames.db')
+        connection = sqlite3.connect('connectFour.db')
 
         # get a string of the moves
         moves = ""
@@ -168,7 +168,7 @@ class game:
         connection.close()
 
     def load(self, name):
-        connection = sqlite3.connect('savedGames.db')
+        connection = sqlite3.connect('connectFour.db')
         # get the game info of the game identified by the name
         sql = f"SELECT NAME, MOVES, OPPONENT from SAVES WHERE NAME == '{name}'"
         gameInfo = connection.execute(sql)
@@ -188,7 +188,7 @@ class game:
             raise nameError("name invalid...")
 
     def loadPuzzle(self, puzzleCode):
-        connection = sqlite3.connect('savedGames.db')
+        connection = sqlite3.connect('connectFour.db')
         if puzzleCode == "random":
             # get random puzzle id from the saved puzzles
             sql = f"SELECT * from PUZZLES"
@@ -217,7 +217,7 @@ class game:
 
     def savePuzzle(self, ID, solution):
         # connect to database
-        connection = sqlite3.connect('savedGames.db')
+        connection = sqlite3.connect('connectFour.db')
 
         # get a string of the moves
         moves = ""

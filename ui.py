@@ -9,7 +9,12 @@ from time import localtime, time
 from asyncio import sleep as s
 from asyncio import get_event_loop
 from sqlite3 import IntegrityError
+import sqlite3
+from hashlib import pbkdf2_hmac
+from os import urandom
 
+class accountError(Exception):
+    pass
 
 class hostError(Exception):
     pass
@@ -44,6 +49,7 @@ class gui(ui):
         self.__gameOver = False
         self.__animating = False
         self.__inMenu = False
+        self.__creatingAccount = False
 
         self._opponent = None
         self.__opponentType = StringVar(value="Human")
@@ -69,10 +75,103 @@ class gui(ui):
         self.__logInConsole = console
 
     def _logIn(self):
-        pass
+        if not self.__inMenu and not self.__creatingAccount:
+            try:
+                connection = sqlite3.connect('connectFour.db')
+                # verify account details
+                sql = f"SELECT USERNAME, KEY, HPWORD from ACCOUNTS WHERE USERNAME == '{self.__username.get()}'"
+                accountInfo = connection.execute(sql)
+                username, key, hashedPassword = None, None, None
+                for row in accountInfo:
+                    username, key, hashedPassword = row
+                if username:
+                    salt = key.to_bytes(4, byteorder="big")
+                    password = pbkdf2_hmac('sha256', self.__password.get().encode('utf-8'), salt, 100000)
+                    if str(password) == str(hashedPassword):
+                        # if details are verified, keep record of account name and open menu
+                        self.__password.set("")
+                        self.__guest = False
+                        self._menu()
+                        connection.close()
+                    else:
+                        # if not then print error message to log in window
+                        self.__password.set("")
+                        self.__username.set("")
+                        connection.close()
+                        raise accountError
+                else:
+                    raise accountError
+            except accountError:
+                # print error message to console
+                self.__logInConsole.insert(END, f"{self.__logInConsole.size() + 1}| username or password incorrect...")
+                # scroll console if needed
+                if self.__logInConsole.size() > 3:
+                    self.__logInConsole.yview_scroll(1, UNITS)
+
 
     def _createAccount(self):
-        pass
+        if not self.__inMenu and not self.__creatingAccount:
+            self.__creatingAccount = True
+            accountCreationWin = Toplevel(self.__root)
+            accountCreationWin.title("Create Account")
+            frame = Frame(accountCreationWin)
+            frame.pack()
+            self.__accountCreationWin = accountCreationWin
+
+            self.__uName = StringVar()
+            self.__pWord = StringVar()
+            self.__confPWord = StringVar()
+
+            Entry(frame, textvariable=self.__uName).pack(fill=X)
+            Entry(frame, textvariable=self.__pWord).pack(fill=X)
+            Entry(frame, textvariable=self.__confPWord).pack(fill=X)
+            Button(frame, text="Create Account", command=self._addAccount).pack(fill=X)
+
+            console = Listbox(frame, height=3)
+            console.pack(fill=X)
+            self.__createAccountConsole = console
+
+            Button(frame, text="Cancel", command=self._cancelCreate).pack(fill=X)
+
+    def _addAccount(self):
+        if self.__pWord.get() == self.__confPWord.get():
+            # get random salt
+            salt = urandom(4)
+            # get the integer value of the salt to store
+            key = int.from_bytes(salt, byteorder="big")
+            # get hashed password
+            hashedPassword = pbkdf2_hmac('sha256', self.__pWord.get().encode('utf-8'), salt, 100000)
+            # try to add the account to the database
+            connection = sqlite3.connect('connectFour.db')
+            try:
+                sql = f"""INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD)
+                              VALUES ("{self.__uName.get()}", "{key}", "{hashedPassword}")"""
+                connection.execute(sql)
+                connection.commit()
+                # close connection
+                connection.close()
+                # close account creation window
+                self._cancelCreate()
+                # print message to log in console
+                self.__logInConsole.insert(END, f"{self.__logInConsole.size() + 1}| account created...")
+                # scroll console if needed
+                if self.__logInConsole.size() > 3:
+                    self.__logInConsole.yview_scroll(1, UNITS)
+            except IntegrityError:
+                # close connection
+                connection.close()
+                # print error message
+                self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| username taken, try again...")
+                if self.__createAccountConsole.size() > 3:
+                    self.__createAccountConsole.yview_scroll(1, UNITS)
+        else:
+            self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| passwords don't match, try again...")
+            if self.__createAccountConsole.size() > 3:
+                self.__createAccountConsole.yview_scroll(1, UNITS)
+
+    def _cancelCreate(self):
+        self.__accountCreationWin.destroy()
+        self.__creatingAccount = False
 
     def _guestLogIn(self):
         self.__guest = True
