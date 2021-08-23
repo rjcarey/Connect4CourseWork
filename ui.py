@@ -75,7 +75,8 @@ class gui(ui):
         pass
 
     def _guestLogIn(self):
-        pass
+        self.__guest = True
+        self._menu()
 
     def _menu(self):
         if not self.__inMenu:
