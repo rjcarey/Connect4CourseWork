@@ -29,6 +29,7 @@ class gui(ui):
         frame = Frame(root)
         frame.pack()
         self.__root = root
+
         self.__running = False
         self.__gameInProgress = False
         self.__helpInProgress = False
@@ -42,6 +43,8 @@ class gui(ui):
         self.__puzzleInProgress = False
         self.__gameOver = False
         self.__animating = False
+        self.__inMenu = False
+
         self._opponent = None
         self.__opponentType = StringVar(value="Human")
         self.__waitingForHost = False
@@ -49,10 +52,43 @@ class gui(ui):
         self.__waitingForMove = False
         self.__client = client()
         self._clientTurn = True
-        
-        Button(frame, text="Help", command=self._help).pack(fill=X)
-        Button(frame, text="Play", command=self._gametype).pack(fill=X)
+
+        self.__username = StringVar()
+        self.__password = StringVar()
+
+        Label(frame, text="Connect 4").pack(fill=X)
+        Entry(frame, textvariable=self.__username).pack(fill=X)
+        Entry(frame, textvariable=self.__password).pack(fill=X)
+        Button(frame, text="Log In", command=self._logIn).pack(fill=X)
+        Button(frame, text="Create Account", command=self._createAccount).pack(fill=X)
+        Button(frame, text="Play As Guest", command=self._guestLogIn).pack(fill=X)
         Button(frame, text="Quit", command=self._quit).pack(fill=X)
+
+        console = Listbox(frame, height=3)
+        console.pack(fill=X)
+        self.__logInConsole = console
+
+    def _logIn(self):
+        pass
+
+    def _createAccount(self):
+        pass
+
+    def _guestLogIn(self):
+        pass
+
+    def _menu(self):
+        if not self.__inMenu:
+            self.__inMenu = True
+            menuWin = Toplevel(self.__root)
+            menuWin.title("Menu")
+            frame = Frame(menuWin)
+            frame.pack()
+            self.__menuWin = menuWin
+
+            Button(frame, text="Help", command=self._help).pack(fill=X)
+            Button(frame, text="Play", command=self._gametype).pack(fill=X)
+            Button(frame, text="Quit", command=self._quit).pack(fill=X)
 
     def _gametype(self):
         if not self.__typeChoiceInProgress:
