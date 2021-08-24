@@ -50,6 +50,7 @@ class gui(ui):
         self.__animating = False
         self.__inMenu = False
         self.__creatingAccount = False
+        self.__statsInProgress = False
 
         self._opponent = None
         self.__opponentType = StringVar(value="Human")
@@ -79,11 +80,11 @@ class gui(ui):
             try:
                 connection = sqlite3.connect('connectFour.db')
                 # verify account details
-                sql = f"SELECT USERNAME, KEY, HPWORD from ACCOUNTS WHERE USERNAME == '{self.__username.get()}'"
+                sql = f"SELECT * from ACCOUNTS WHERE USERNAME == '{self.__username.get()}'"
                 accountInfo = connection.execute(sql)
-                username, key, hashedPassword = None, None, None
+                username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = None, None, None, 0, 0, 0, 0, 0, 0
                 for row in accountInfo:
-                    username, key, hashedPassword = row
+                    username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = row
                 if username:
                     salt = key.to_bytes(4, byteorder="big")
                     password = pbkdf2_hmac('sha256', self.__password.get().encode('utf-8'), salt, 100000)
@@ -143,8 +144,8 @@ class gui(ui):
             # try to add the account to the database
             connection = sqlite3.connect('connectFour.db')
             try:
-                sql = f"""INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD)
-                              VALUES ("{self.__uName.get()}", "{key}", "{hashedPassword}")"""
+                sql = f"""INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE)
+                              VALUES ("{self.__uName.get()}", "{key}", "{hashedPassword}", 0, 0, 0, 0, 0, 0)"""
                 connection.execute(sql)
                 connection.commit()
                 # close connection
@@ -191,7 +192,28 @@ class gui(ui):
             Button(frame, text="Dismiss", command=self._dismissMenu).pack(fill=X)
 
     def _stats(self):
-        pass
+        if not self.__guest and not self.__statsInProgress:
+            self.__statsInProgress = True
+            statsWin = Toplevel(self.__root)
+            statsWin.title("Stats")
+            frame = Frame(statsWin)
+            frame.pack()
+            self.__statsWin = statsWin
+
+            # stats (played, lost, won, drawn, puzzles finished, puzzles made)
+            Label(frame, text=f"{self.__username.get()}'s stats:").pack(fill=X)
+            Label(frame, text=f"PLAYED: {self.__statsPlayed}").pack(fill=X)
+            Label(frame, text=f"WON: {self.__statsWon}").pack(fill=X)
+            Label(frame, text=f"LOST: {self.__statsLost}").pack(fill=X)
+            Label(frame, text=f"DRAWN: {self.__statsDrawn}").pack(fill=X)
+            Label(frame, text=f"PUZZLE WINS: {self.__statsPFin}").pack(fill=X)
+            Label(frame, text=f"PUZZLES MADE: {self.__statsPMade}").pack(fill=X)
+            # back button
+            Button(frame, text="Dismiss", command=self._dismissStats).pack(fill=X)
+
+    def _dismissStats(self):
+        self.__statsWin.destroy()
+        self.__statsInProgress = False
 
     def _dismissMenu(self):
         self.__menuWin.destroy()
@@ -278,7 +300,8 @@ class gui(ui):
             if create:
                 t = "PUT IN SOME COUNTERS, ENTER A PUZZLE ID THEN SAVE"
             else:
-                t = "PLAY THE BEST MOVE POSSIBLE"
+                player = "RED" if self.__game.getPlayer == game.PONE else "YELLOW"
+                t = f"PLAY THE BEST MOVE POSSIBLE FOR {player}"
             Label(frame, text=t, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
 
             # board
@@ -394,6 +417,14 @@ class gui(ui):
         Label(frame, text="WELL DONE!").pack(fill=X)
         Button(frame, text="Exit", command=self._exitSolved).pack(fill=X)
 
+        # update stats
+        self.__statsPFin += 1
+        connection = sqlite3.connect('connectFour.db')
+        stmt = f"UPDATE ACCOUNTS set SPFIN = {self.__statsPFin} WHERE USERNAME = '{self.__username.get()}';"
+        connection.execute(stmt)
+        connection.commit()
+        connection.close()
+
     def _puzzleLose(self):
         loseWin = Toplevel(self.__root)
         loseWin.title("Solved")
@@ -422,6 +453,15 @@ class gui(ui):
         try:
             self.__game.savePuzzle(ID,solution)
             self._exitPuzzle()
+
+            # update stats
+            self.__statsPMade += 1
+            connection = sqlite3.connect('connectFour.db')
+            stmt = f"UPDATE ACCOUNTS set SPMADE = {self.__statsPMade} WHERE USERNAME = '{self.__username.get()}';"
+            connection.execute(stmt)
+            connection.commit()
+            connection.close()
+
         # if the name is not unique, print an error message
         except IntegrityError:
             self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| ID taken, try again...")
@@ -867,6 +907,30 @@ class gui(ui):
                 counter = "#ff9999" if winningPlayer == game.PONE else "#ffffb3"
                 for row, col in run:
                     self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+
+            # update stats
+            if not self.__guest:
+                self.__statsPlayed += 1
+                if self.__game.getWinner == "Draw":
+                    self.__statsDrawn += 1
+                elif self.__game.getWinner == game.PONE:
+                    self.__statsWon += 1
+                else:
+                    self.__statsLost += 1
+
+                connection = sqlite3.connect('connectFour.db')
+
+                stmt = f"UPDATE ACCOUNTS set SPLAYED = {self.__statsPlayed} WHERE USERNAME = '{self.__username.get()}';"
+                connection.execute(stmt)
+                stmt = f"UPDATE ACCOUNTS set SWON = {self.__statsWon} WHERE USERNAME = '{self.__username.get()}';"
+                connection.execute(stmt)
+                stmt = f"UPDATE ACCOUNTS set SLOST = {self.__statsLost} WHERE USERNAME = '{self.__username.get()}';"
+                connection.execute(stmt)
+                stmt = f"UPDATE ACCOUNTS set SDRAWN = {self.__statsDrawn} WHERE USERNAME = '{self.__username.get()}';"
+                connection.execute(stmt)
+
+                connection.commit()
+                connection.close()
 
     def __animatedDrop(self, row, col, counter):
         self.__animating = True
