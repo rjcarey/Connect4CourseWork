@@ -108,7 +108,6 @@ class gui(ui):
                 if self.__logInConsole.size() > 3:
                     self.__logInConsole.yview_scroll(1, UNITS)
 
-
     def _createAccount(self):
         if not self.__inMenu and not self.__creatingAccount:
             self.__creatingAccount = True
@@ -186,9 +185,13 @@ class gui(ui):
             frame.pack()
             self.__menuWin = menuWin
 
-            Button(frame, text="Help", command=self._help).pack(fill=X)
             Button(frame, text="Play", command=self._gametype).pack(fill=X)
+            Button(frame, text="Help", command=self._help).pack(fill=X)
+            Button(frame, text="Stats", command=self._stats).pack(fill=X)
             Button(frame, text="Dismiss", command=self._dismissMenu).pack(fill=X)
+
+    def _stats(self):
+        pass
 
     def _dismissMenu(self):
         self.__menuWin.destroy()
