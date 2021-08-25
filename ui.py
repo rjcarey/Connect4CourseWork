@@ -268,6 +268,14 @@ class gui(ui):
             pTwoDropDown = OptionMenu(frame, self.__pTwo, *self.__counters)
             pTwoDropDown.pack(fill=X)
 
+            # shape choices
+            Label(frame, text=f"Shape:").pack(fill=X)
+            self.__shape = StringVar()
+            self.__shape.set("CIRCLE")
+            shapes = ["CIRCLE", "SQUARE", "TRIANGLE"]
+            shapeDropDown = OptionMenu(frame, self.__shape, *shapes)
+            shapeDropDown.pack(fill=X)
+
             Button(frame, text="Dismiss", command=self._dismissPuzzleSetup).pack(fill=X)
 
             console = Listbox(frame, height=3)
@@ -359,8 +367,13 @@ class gui(ui):
                         counterColour = self.__colours[self.__pTwoColour]
                     else:
                         counterColour = "white"
-                    oval = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
-                    self.__spaces[row][column] = oval
+                    if self.__shape.get() == 'CIRCLE':
+                        shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
+                    elif self.__shape.get() == 'SQUARE':
+                        shape = board.create_rectangle(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)
+                    elif self.__shape.get() == 'TRIANGLE':
+                        shape = board.create_polygon(baseX1 + counterSize / 2 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), baseX2 - counterSize + (column * tile), baseY2 + (row * tile), fill=counterColour)
+                    self.__spaces[row][column] = shape
             board.grid(row=1, column=0)
             self.__canvas = board
 
@@ -643,14 +656,22 @@ class gui(ui):
             pTwoDropDown = OptionMenu(self.__setupWin, self.__pTwo, *self.__counters)
             pTwoDropDown.grid(row=2, column=1, sticky=N)
 
+            # shape choices
+            Label(frame, text=f"Shape:").grid(row=3, column=0)
+            self.__shape = StringVar()
+            self.__shape.set("CIRCLE")
+            shapes = ["CIRCLE", "SQUARE", "TRIANGLE"]
+            shapeDropDown = OptionMenu(self.__setupWin, self.__shape, *shapes)
+            shapeDropDown.grid(row=3, column=1, sticky=N)
+
             # load button
-            Button(frame, text="Load", command=self._load).grid(row=3, column=0)
+            Button(frame, text="Load", command=self._load).grid(row=4, column=0)
 
             # play button
-            Button(frame, text="Play", command=self._play).grid(row=4, column=0)
+            Button(frame, text="Play", command=self._play).grid(row=5, column=0)
 
             # back button
-            Button(frame, text="Back", command=self._dismissSetup).grid(row=5, column=0)
+            Button(frame, text="Back", command=self._dismissSetup).grid(row=6, column=0)
 
             # create a game object
             self.__game = game()
@@ -798,8 +819,14 @@ class gui(ui):
                         counterColour = self.__colours[self.__pTwoColour]
                     else:
                         counterColour = "white"
-                    oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill=counterColour)# , dash=(7,1,1,1)
-                    self.__spaces[row][column] = oval
+                    if self.__shape.get() == 'CIRCLE':
+                        shape = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill=counterColour)# , dash=(7,1,1,1)
+                    elif self.__shape.get() == 'SQUARE':
+                        shape = board.create_rectangle(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill=counterColour)
+                    elif self.__shape.get() == 'TRIANGLE':
+                        shape = board.create_polygon(baseX1 + counterSize/2 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), baseX2 - counterSize + (column*tile), baseY2 + (row*tile), fill=counterColour)
+
+                    self.__spaces[row][column] = shape
             board.grid(row=1, column=0)
             self.__canvas = board
 
