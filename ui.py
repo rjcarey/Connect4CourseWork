@@ -60,6 +60,12 @@ class gui(ui):
         self.__client = client()
         self._clientTurn = True
 
+        self.__colours = ['#ff0000', '#e6e600', '#cc00ff', '#ff33cc', '#ff6600', '#0099cc', '#33cc33', '#000000']
+        self.__highlights = ['#ff9999', '#ffffb3', '#cc99ff', '#ff99cc', '#ffcc99', '#66ccff', '#99ff99', '#808080']
+        self.__counters = ['RED', 'YELLOW', 'PURPLE', 'PINK', 'ORANGE', 'BLUE', 'GREEN', 'BLACK']
+        self.__pOneColour = 0
+        self.__pTwoColour = 1
+
         self.__username = StringVar()
         self.__password = StringVar()
 
@@ -249,6 +255,19 @@ class gui(ui):
             Button(frame, text="Random", command=self._puzzleRandom).pack(fill=X)
             Entry(frame, textvariable=self.__puzzleCode).pack(fill=X)
             Button(frame, text="Load", command=self._puzzleLoad).pack(fill=X)
+
+            # colour choices
+            self.__pOne = StringVar()
+            self.__pOne.set("RED")
+            self.__pTwo = StringVar()
+            self.__pTwo.set("YELLOW")
+            Label(frame, text=f"Player 1 colour:").pack(fill=X)
+            pOneDropDown = OptionMenu(frame, self.__pOne, *self.__counters)
+            pOneDropDown.pack(fill=X)
+            Label(frame, text=f"Player 2 colour:").pack(fill=X)
+            pTwoDropDown = OptionMenu(frame, self.__pTwo, *self.__counters)
+            pTwoDropDown.pack(fill=X)
+
             Button(frame, text="Dismiss", command=self._dismissPuzzleSetup).pack(fill=X)
 
             console = Listbox(frame, height=3)
@@ -281,6 +300,13 @@ class gui(ui):
             self._dismissPuzzleSetup()
             self.__puzzleInProgress = True
 
+            # set the colours
+            for i, colour in enumerate(self.__counters):
+                if colour == self.__pOne.get():
+                    self.__pOneColour = i
+                elif colour == self.__pTwo.get():
+                    self.__pTwoColour = i
+
             # create the puzzle window
             puzzleWin = Toplevel(self.__root)
             puzzleWin.title("Puzzle")
@@ -300,7 +326,7 @@ class gui(ui):
             if create:
                 t = "PUT IN SOME COUNTERS, ENTER A PUZZLE ID THEN SAVE"
             else:
-                player = "RED" if self.__game.getPlayer == game.PONE else "YELLOW"
+                player = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
                 t = f"PLAY THE BEST MOVE POSSIBLE FOR {player}"
             Label(frame, text=t, bg='gray').grid(row=0, column=4, columnspan=3, sticky=N + S + E + W)
 
@@ -310,9 +336,9 @@ class gui(ui):
             if winWidth < 40:
                 # min board tile size
                 winWidth = 40
-            elif winWidth > 110:
+            elif winWidth > 100:
                 # max board tile size
-                winWidth = 110
+                winWidth = 100
             tile = winWidth
             counterSize = tile * 0.8
             boardWidth = 7 * tile
@@ -328,9 +354,9 @@ class gui(ui):
                     # create counter slots
                     space = self.__game.getSpace(row, column)
                     if space == game.PONE:
-                        counterColour = "red"
+                        counterColour = self.__colours[self.__pOneColour]
                     elif space == game.PTWO:
-                        counterColour = "#e6e600"
+                        counterColour = self.__colours[self.__pTwoColour]
                     else:
                         counterColour = "white"
                     oval = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
@@ -380,7 +406,7 @@ class gui(ui):
         elif not self._puzzleOver:
             try:
                 # set the counter colour
-                counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # animate the counter
@@ -418,12 +444,13 @@ class gui(ui):
         Button(frame, text="Exit", command=self._exitSolved).pack(fill=X)
 
         # update stats
-        self.__statsPFin += 1
-        connection = sqlite3.connect('connectFour.db')
-        stmt = f"UPDATE ACCOUNTS set SPFIN = {self.__statsPFin} WHERE USERNAME = '{self.__username.get()}';"
-        connection.execute(stmt)
-        connection.commit()
-        connection.close()
+        if not self.__guest:
+            self.__statsPFin += 1
+            connection = sqlite3.connect('connectFour.db')
+            stmt = f"UPDATE ACCOUNTS set SPFIN = {self.__statsPFin} WHERE USERNAME = '{self.__username.get()}';"
+            connection.execute(stmt)
+            connection.commit()
+            connection.close()
 
     def _puzzleLose(self):
         loseWin = Toplevel(self.__root)
@@ -480,13 +507,13 @@ class gui(ui):
             # otherwise,
             else:
                 # play move
-                counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
                 row = 5 - self.__game.play(column + 1)
                 # animate drop
                 self.__animatedDrop(row, column, counter)
                 self.__canvas.itemconfig(self.__spaces[row][column], fill=counter)
                 # highlight solution
-                counter = "#ff9999" if not self.__game.getPlayer == game.PONE else "#ffffb3"
+                counter = self.__highlights[self.__pOneColour] if not self.__game.getPlayer == game.PONE else self.__highlights[self.__pTwoColour]
                 self.__canvas.itemconfig(self.__spaces[row][column], fill=counter)
                 self._puzzleOver = True
 
@@ -521,6 +548,19 @@ class gui(ui):
             Button(frame, text="Host", command=self._hostGame).pack(fill=X)
             Entry(frame, textvariable=self.__joinCode).pack(fill=X)
             Button(frame, text="Join", command=self._attemptJoin).pack(fill=X)
+
+            # colour choices
+            self.__pOne = StringVar()
+            self.__pOne.set("RED")
+            self.__pTwo = StringVar()
+            self.__pTwo.set("YELLOW")
+            Label(frame, text=f"Player 1 colour:").pack(fill=X)
+            pOneDropDown = OptionMenu(frame, self.__pOne, *self.__counters)
+            pOneDropDown.pack(fill=X)
+            Label(frame, text=f"Player 2 colour:").pack(fill=X)
+            pTwoDropDown = OptionMenu(frame, self.__pTwo, *self.__counters)
+            pTwoDropDown.pack(fill=X)
+
             Button(frame, text="Back", command=self._dismissLANSetup).pack(fill=X)
 
             # console
@@ -589,14 +629,28 @@ class gui(ui):
             opponentDropDown = OptionMenu(self.__setupWin, self.__opponentType, *options)
             opponentDropDown.grid(row=0, column=1, sticky=N)
 
+            # colour choices
+            playerOne = "Player 1" if self.__guest else f"{self.__username.get()}"
+            Label(frame, text=f"{playerOne} colour:").grid(row=1, column=0)
+            playerTwo = "Player 2" if self.__guest else f"Opponent"
+            Label(frame, text=f"{playerTwo} colour:").grid(row=2, column=0)
+            self.__pOne = StringVar()
+            self.__pOne.set("RED")
+            self.__pTwo = StringVar()
+            self.__pTwo.set("YELLOW")
+            pOneDropDown = OptionMenu(self.__setupWin, self.__pOne, *self.__counters)
+            pOneDropDown.grid(row=1, column=1, sticky=N)
+            pTwoDropDown = OptionMenu(self.__setupWin, self.__pTwo, *self.__counters)
+            pTwoDropDown.grid(row=2, column=1, sticky=N)
+
             # load button
-            Button(frame, text="Load", command=self._load).grid(row=1, column=0, columnspan=2)
+            Button(frame, text="Load", command=self._load).grid(row=3, column=0)
 
             # play button
-            Button(frame, text="Play", command=self._play).grid(row=2, column=0, columnspan=2)
+            Button(frame, text="Play", command=self._play).grid(row=4, column=0)
 
             # back button
-            Button(frame, text="Back", command=self._dismissSetup).grid(row=3, column=0, columnspan=2)
+            Button(frame, text="Back", command=self._dismissSetup).grid(row=5, column=0)
 
             # create a game object
             self.__game = game()
@@ -668,10 +722,18 @@ class gui(ui):
     def _play(self):
         # print(self.__opponentType.get())
         if not self.__gameInProgress:
+            self._dismissSetup()
             # if the opponent is not human, create an AI object
             if self.__opponentType.get() != "Human":
                 self.__opponent = Ai(self.__opponentType.get())
             self.__gameInProgress = True
+
+            # set the colours
+            for i, colour in enumerate(self.__counters):
+                if colour == self.__pOne.get():
+                    self.__pOneColour = i
+                elif colour == self.__pTwo.get():
+                    self.__pTwoColour = i
 
             # create the game window
             gameWin = Toplevel(self.__root)
@@ -695,7 +757,7 @@ class gui(ui):
             # player turn label
             self.__playerTurn = StringVar()
             if self.__opponentType.get() == "Human" and not self._network:
-                counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
                 self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
             elif self.__opponentType.get() == "Human" and self._network:
                 if self._clientTurn:
@@ -713,9 +775,9 @@ class gui(ui):
             if winWidth < 40:
                 # min board tile size
                 winWidth = 40
-            elif winWidth > 110:
+            elif winWidth > 100:
                 # max board tile size
-                winWidth = 110
+                winWidth = 100
             tile = winWidth
             counterSize = tile * 0.8
             boardWidth = 7 * tile
@@ -731,9 +793,9 @@ class gui(ui):
                     # create counter slots
                     space = self.__game.getSpace(row, column)
                     if space == game.PONE:
-                        counterColour = "red"
+                        counterColour = self.__colours[self.__pOneColour]
                     elif space == game.PTWO:
-                        counterColour = "#e6e600"
+                        counterColour = self.__colours[self.__pTwoColour]
                     else:
                         counterColour = "white"
                     oval = board.create_oval(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill=counterColour)# , dash=(7,1,1,1)
@@ -813,7 +875,7 @@ class gui(ui):
                 row, col = self.__game.undo()
                 self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
                 if not self.__puzzleInProgress:
-                    counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                    counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
                 else:
                     self._puzzleOver = False
@@ -837,7 +899,7 @@ class gui(ui):
         elif not self.__game.getWinner:
             try:
                 # set the counter colour
-                counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # if playing a networked game send the move to the opponent
@@ -850,7 +912,7 @@ class gui(ui):
                 # change turn display
                 if self.__opponentType.get() == "Human" and not self._network:
                     # if its pass and play, use the counter colour to say whose turn it is
-                    counter = 'RED' if self.__game.getPlayer == game.PONE else 'YELLOW'
+                    counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
                 elif self.__opponentType.get() == "Human" and self._network:
                     # if it is a networked game, flip whose turn
@@ -876,7 +938,7 @@ class gui(ui):
             # if it's a game against the AI, play the AI's move
             if self.__opponentType.get() != "Human" and not self.__game.getWinner:
                 # AI move
-                counter = 'red' if self.__game.getPlayer == game.PONE else '#e6e600'
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
                 col = self.__opponent.getColumn(self.__game.Board, self.__game.getPlayer)
                 row = 5 - self.__game.play(col + 1)
                 # animate drop
@@ -892,9 +954,8 @@ class gui(ui):
         if winningPlayer:
             self.__gameOver = True
             if self.__game.getWinner != "Draw":
-                winner = 'RED' if self.__game.getWinner == game.PONE else 'YELLOW'
+                winner = self.__counters[self.__pOneColour] if self.__game.getWinner == game.PONE else self.__counters[self.__pTwoColour]
                 if self.__opponentType.get() == "Human":
-                    winner = 'RED' if self.__game.getWinner == game.PONE else 'YELLOW'
                     self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
                 else:
                     winner = 'YOU' if self.__game.getWinner == game.PONE else 'OPPONENT'
@@ -904,7 +965,7 @@ class gui(ui):
 
             # highlight winning run
             if run:
-                counter = "#ff9999" if winningPlayer == game.PONE else "#ffffb3"
+                counter = self.__highlights[self.__pOneColour] if winningPlayer == game.PONE else self.__highlights[self.__pTwoColour]
                 for row, col in run:
                     self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
 
