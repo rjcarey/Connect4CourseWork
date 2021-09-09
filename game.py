@@ -149,7 +149,7 @@ class game:
             # if there are no moves to undo, raise an error message
             raise gameError("no moves to undo...")
 
-    def save(self, name, opponent):
+    def save(self, name, opponent, account):
         # connect to database
         connection = sqlite3.connect('connectFour.db')
 
@@ -159,22 +159,22 @@ class game:
             moves += str(move[1])
 
         # add game to database
-        sql = f"""INSERT INTO SAVES (NAME,MOVES,OPPONENT)
-              VALUES ('{name}', '{moves}', '{opponent}')"""
+        sql = f"""INSERT INTO SAVES (NAME,MOVES,OPPONENT,ACCOUNT)
+              VALUES ('{name}', '{moves}', '{opponent}', '{account}')"""
         connection.execute(sql)
         connection.commit()
 
         # close connection
         connection.close()
 
-    def load(self, name):
+    def load(self, name, username):
         connection = sqlite3.connect('connectFour.db')
         # get the game info of the game identified by the name
-        sql = f"SELECT NAME, MOVES, OPPONENT from SAVES WHERE NAME == '{name}'"
+        sql = f"SELECT NAME, MOVES, OPPONENT, ACCOUNT from SAVES WHERE NAME == '{name}' and ACCOUNT == '{username}'"
         gameInfo = connection.execute(sql)
-        name, moves, opponent = None, None, None
+        name, moves, opponent, account = None, None, None, None
         for row in gameInfo:
-            name, moves, opponent = row
+            name, moves, opponent, account = row
         # if the game return the move string, play the moves
         if moves:
             for move in moves:

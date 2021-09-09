@@ -701,17 +701,16 @@ class gui(ui):
 
             Label(frameUpper, text=f"Play", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
 
+            # first player
+            self.__firstTurn = StringVar()
+            self.__firstTurn.set("Choose First Player")
+            if not self.__guest:
+                firstTurnDropDown = OptionMenu(frameUpper, self.__firstTurn, *[self.__username.get(), "Guest"])
+                firstTurnDropDown.configure(font='{Copperplate Gothic Light} 14')
+                firstTurnDropDown.pack(fill=X)
+
             frameMiddle = Frame(setupWin, bg='#9DE3FD')
             frameMiddle.pack(fill=X)
-
-            # first player
-            if not self.__guest:
-                Label(frameMiddle, text="Choose Player 1:").grid(row=0)
-                Label(frameMiddle, text="RED").grid(row=1, column=0)
-                turnSlider = Scale(self.__setupWin, from_=0, to_=1, orient=HORIZONTAL, showvalue=0)
-                turnSlider.grid(row=1, column=1)
-                Label(frameMiddle, text="YELLOW").grid(row=1, column=2)
-                #self._firstTurn = turnSlider.get()
 
             # opponent
             Label(frameMiddle, text="Choose Opponent:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=W)
@@ -799,8 +798,9 @@ class gui(ui):
             # self.__loadConsole.insert(END, f"1| ")
 
     def _loadGame(self):
+        username = "guest" if self.__guest else self.__username.get()
         try:
-            opponent = self.__game.load(self.__loadName.get())
+            opponent = self.__game.load(self.__loadName.get(), username)
             self.__opponentType.set(opponent)
             self.__loadWin.destroy()
             self.__loadInProgress = False
@@ -840,7 +840,10 @@ class gui(ui):
     def _play(self):
         # print(self.__opponentType.get())
         if not self.__gameInProgress:
-            self._dismissSetup()
+            if self.__setupInProgress == True:
+                self._dismissSetup()
+            else:
+                self.__game = game()
             # if the opponent is not human, create an AI object
             if self.__opponentType.get() != "Human":
                 self.__opponent = Ai(self.__opponentType.get())
@@ -989,9 +992,10 @@ class gui(ui):
             # self.__saveConsole.insert(END, f"1| ")
 
     def _saveGame(self):
+        username = "guest" if self.__guest else self.__username.get()
         # try to save
         try:
-            self.__game.save(self.__gameName.get(), self.__opponentType.get())
+            self.__game.save(self.__gameName.get(), self.__opponentType.get(), username)
             self._cancelSave()
             self._dismissGame()
         # if the name is not unique, print an error message
@@ -1025,7 +1029,7 @@ class gui(ui):
 
     def __playMove(self, col):
         # if a counter is falling or the client is waiting for the opponent to move, print a wait message
-        if self.__animating or not self._clientTurn:
+        if self.__animating: #  or not self._clientTurn
             self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
             if self.__gameConsole.size() > 3:
                 self.__gameConsole.yview_scroll(1, UNITS)
@@ -1038,7 +1042,7 @@ class gui(ui):
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # if playing a networked game send the move to the opponent
-                if self._network:
+                if self._network and self._clientTurn:
                     message = {"to": self._opponent, "from": self.__clientCode, "cmd": "move", "col": col}
                     get_event_loop().create_task(self.__client.send(message))
                 # animate the counter
@@ -1054,10 +1058,8 @@ class gui(ui):
                     self._clientTurn = True if not self._clientTurn else False
                     if self._clientTurn:
                         self.__playerTurn.set(f'YOUR TURN\nCHOOSE COLUMN')
-                        self.__waitingForMove = False
                     else:
                         self.__playerTurn.set(f'OPPONENTS TURN\nPLEASE WAIT')
-                        self.__waitingForMove = True
                 else:
                     # if it's a game against AI tell the player it's the AI's turn
                     self.__playerTurn.set(f'OPPONENTS TURN\nPLEASE WAIT')
@@ -1069,6 +1071,11 @@ class gui(ui):
                     self.__gameConsole.yview_scroll(1, UNITS)
             # check if played winning move
             self.__checkIfWon()
+            if self._network:
+                if self._clientTurn:
+                    self.__waitingForMove = False
+                else:
+                    self.__waitingForMove = True
 
             # if it's a game against the AI, play the AI's move
             if self.__opponentType.get() != "Human" and not self.__game.getWinner:
@@ -1109,7 +1116,7 @@ class gui(ui):
                 self.__statsPlayed += 1
                 if self.__game.getWinner == "Draw":
                     self.__statsDrawn += 1
-                elif self.__game.getWinner == game.PONE:
+                elif self.__game.getWinner == game.PONE and self.__firstTurn.get() == self.__username.get():
                     self.__statsWon += 1
                 else:
                     self.__statsLost += 1
@@ -1170,7 +1177,7 @@ class gui(ui):
                     counter = 0
                     message = await self.__client.recv()
                     cmd = message.get("cmd", None)
-                    if cmd == "match" and message.get("to", None) == self.__clientCode:
+                    if cmd == "match" and message.get("to", None) == str(self.__clientCode):
                         self._opponent = message.get("from", None)
                         self.__localInProgress = False
                         # if int(self.__clientCode) % int(self.__clientCode[4:]) > int(self._opponent) % int(self._opponent[4:]):
@@ -1209,7 +1216,7 @@ class gui(ui):
                             self.__waitingForMove = True
                         self._play()
 
-            if self.__waitingForMove:
+            elif self.__waitingForMove:
                 # if waiting for move, wait for a move message from the opponent and play the move
                 while self.__waitingForMove:
                     message = await self.__client.recv()
