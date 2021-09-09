@@ -1,5 +1,6 @@
 from asyncio import Queue, create_task, wait, FIRST_COMPLETED, get_event_loop
 from websockets import serve
+from json import dumps
 from configs import serverIP, serverPort
 
 
@@ -9,12 +10,26 @@ class server:
         self._connections = set()
         # queue of messages
         self._messageQ = Queue()
+        # Host List
+        self.__hosts = set()
 
     async def _consumer_handler(self, websocket):
         async for message in websocket:
             # wait for a message and put it in the queue when received
             print(message)
-            await self._messageQ.put(message)
+            dictionary = eval(message)
+            if dictionary.get('cmd', None) == 'hHost':
+                self.__hosts.add(dictionary.get('from', None))
+            if dictionary.get('cmd', None) == 'hJoin':
+                if dictionary.get('joinCode', None) in self.__hosts:
+                    self.__hosts.remove(dictionary.get('joinCode', None))
+                    await self._messageQ.put(message)
+                else:
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'hnf'}
+                    print(msg)
+                    await self._messageQ.put(dumps(msg))
+            else:
+                await self._messageQ.put(message)
 
     async def _producer_handler(self):
         while True:

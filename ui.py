@@ -670,6 +670,8 @@ class gui(ui):
             Label(frame, text="", bg='#9DE3FD').pack(fill=X)
             Button(frame, text="Back", command=self._dismissHost, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
+            message = {"from": self.__clientCode, "cmd": "hHost"}
+            get_event_loop().create_task(self.__client.send(message))
             self.__waitingForJoin = True
 
     def _dismissHost(self):
@@ -1173,11 +1175,10 @@ class gui(ui):
             # wait for a message from the host
             if self.__waitingForHost:
                 # while client doesnt have an opponent, wait for the host to reply with an accept
-                while not self._opponent:
-                    counter = 0
+                while not self._opponent and self.__waitingForHost:
                     message = await self.__client.recv()
                     cmd = message.get("cmd", None)
-                    if cmd == "match" and message.get("to", None) == str(self.__clientCode):
+                    if cmd == "match" and str(message.get("to", None)) == str(self.__clientCode):
                         self._opponent = message.get("from", None)
                         self.__localInProgress = False
                         # if int(self.__clientCode) % int(self.__clientCode[4:]) > int(self._opponent) % int(self._opponent[4:]):
@@ -1188,13 +1189,12 @@ class gui(ui):
                             self._clientTurn = False
                             self.__waitingForMove = True
                         self._play()
-                    else:
-                        counter += 1
-                        if counter == 5:
-                            self.__waitingForHost = False
-                            self.__LANConsole.insert(END, f"{self.__LANConsole.size() + 1}| host not found...")
-                            if self.__LANConsole.size() > 3:
-                                self.__LANConsole.yview_scroll(1, UNITS)
+                    elif cmd == "hnf" and str(message.get("to", None)) == str(self.__clientCode):
+                        self.__waitingForHost = False
+                        self.__localInProgress = False
+                        self.__LANConsole.insert(END, f"{self.__LANConsole.size() + 1}| host not found...")
+                        if self.__LANConsole.size() > 3:
+                            self.__LANConsole.yview_scroll(1, UNITS)
 
             # wait for a message from the joiner
             elif self.__waitingForJoin:
