@@ -1,2 +1,2 @@
-serverIP = "192.168.1.249"
+serverIP = "172.16.3.18"
 serverPort = "8765"
