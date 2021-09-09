@@ -120,6 +120,7 @@ class game:
         if self.Board[0][col] != game.EMPTY:
             # if the column is full, raise an error
             raise gameError("column full, play again...")
+        playedRow = 0
         for i, row in enumerate(reversed(self.Board)):
             # for each slot in the column (from bottom to top) if the slot is empty, place a counter there
             if row[col] == game.EMPTY:

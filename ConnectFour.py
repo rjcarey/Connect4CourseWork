@@ -11,6 +11,7 @@ def usage():
 
 async def startGame():
     network = False
+    ui = terminal(network)
     if len(argv) == 2:
         if argv[1] == "t":
             # if the user entered 't' create a terminal object

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, HORIZONTAL, Scale, LEFT, RIGHT, OptionMenu, Entry
+from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, \
+    OptionMenu, Entry
 from game import game, gameError, nameError
 from time import sleep
 from players import Ai
@@ -79,7 +80,8 @@ class gui(ui):
         Entry(frame, textvariable=self.__password).pack(fill=X)
         Button(frame, text="Log In", font='{Copperplate Gothic Light} 14', command=self._logIn).pack(fill=X)
         Label(frame, text="", bg='#9DE3FD').pack(fill=X)
-        Button(frame, text="Create Account", font='{Copperplate Gothic Light} 14', command=self._createAccount).pack(fill=X)
+        Button(frame, text="Create Account", font='{Copperplate Gothic Light} 14', command=self._createAccount).pack(
+            fill=X)
         Button(frame, text="Play As Guest", font='{Copperplate Gothic Light} 14', command=self._guestLogIn).pack(fill=X)
         Label(frame, text="", bg='#9DE3FD').pack(fill=X)
         Button(frame, text="Quit", font='{Copperplate Gothic Light} 14', command=self._quit).pack(fill=X)
@@ -139,11 +141,13 @@ class gui(ui):
             self.__pWord.set("Enter Password")
             self.__confPWord.set("Confirm Password")
 
-            Label(frame, text="Create Account", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
+            Label(frame, text="Create Account", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25,
+                  padx=45).pack(fill=X)
             Entry(frame, textvariable=self.__uName).pack(fill=X)
             Entry(frame, textvariable=self.__pWord).pack(fill=X)
             Entry(frame, textvariable=self.__confPWord).pack(fill=X)
-            Button(frame, text="Create Account", command=self._addAccount, font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Button(frame, text="Create Account", command=self._addAccount, font='{Copperplate Gothic Light} 14').pack(
+                fill=X)
             Label(frame, text="", bg='#9DE3FD').pack(fill=X)
 
             console = Listbox(frame, height=3)
@@ -180,11 +184,13 @@ class gui(ui):
                 # close connection
                 connection.close()
                 # print error message
-                self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| username taken, try again...")
+                self.__createAccountConsole.insert(END,
+                                                   f"{self.__createAccountConsole.size() + 1}| username taken, try again...")
                 if self.__createAccountConsole.size() > 3:
                     self.__createAccountConsole.yview_scroll(1, UNITS)
         else:
-            self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| passwords don't match, try again...")
+            self.__createAccountConsole.insert(END,
+                                               f"{self.__createAccountConsole.size() + 1}| passwords don't match, try again...")
             if self.__createAccountConsole.size() > 3:
                 self.__createAccountConsole.yview_scroll(1, UNITS)
 
@@ -224,13 +230,20 @@ class gui(ui):
             self.__statsWin = statsWin
 
             # stats (played, lost, won, drawn, puzzles finished, puzzles made)
-            Label(frame, text=f"{self.__username.get()}'s stats:", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30').pack(fill=X)
-            Label(frame, text=f"PLAYED: {self.__statsPlayed}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-            Label(frame, text=f"WON: {self.__statsWon}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-            Label(frame, text=f"LOST: {self.__statsLost}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-            Label(frame, text=f"DRAWN: {self.__statsDrawn}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-            Label(frame, text=f"PUZZLE WINS: {self.__statsPFin}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-            Label(frame, text=f"PUZZLES MADE: {self.__statsPMade}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
+            Label(frame, text=f"{self.__username.get()}'s stats:", bg='#9DE3FD',
+                  font='{Copperplate Gothic Bold} 30').pack(fill=X)
+            Label(frame, text=f"PLAYED: {self.__statsPlayed}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(
+                fill=X)
+            Label(frame, text=f"WON: {self.__statsWon}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(
+                fill=X)
+            Label(frame, text=f"LOST: {self.__statsLost}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(
+                fill=X)
+            Label(frame, text=f"DRAWN: {self.__statsDrawn}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(
+                fill=X)
+            Label(frame, text=f"PUZZLE WINS: {self.__statsPFin}", bg='#9DE3FD',
+                  font='{Copperplate Gothic Light} 12').pack(fill=X)
+            Label(frame, text=f"PUZZLES MADE: {self.__statsPMade}", bg='#9DE3FD',
+                  font='{Copperplate Gothic Light} 12').pack(fill=X)
             # back button
             Button(frame, text="Dismiss", command=self._dismissStats, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
@@ -253,12 +266,15 @@ class gui(ui):
             self.__typeChoiceWin = typeChoiceWin
 
             Label(frame, text="Play", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
-            Button(frame, text="Pass and Play", command=self._gameSetup, font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Button(frame, text="Pass and Play", command=self._gameSetup, font='{Copperplate Gothic Light} 14').pack(
+                fill=X)
             if self._network:
-                Button(frame, text="Play Local Online", command=self._LANSetup, font='{Copperplate Gothic Light} 14').pack(fill=X)
+                Button(frame, text="Play Local Online", command=self._LANSetup,
+                       font='{Copperplate Gothic Light} 14').pack(fill=X)
             Button(frame, text="Puzzles", command=self._puzzleSetup, font='{Copperplate Gothic Light} 14').pack(fill=X)
             Label(frame, text="", bg='#9DE3FD').pack(fill=X)
-            Button(frame, text="Dismiss", command=self._dismissTypeChoice, font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Button(frame, text="Dismiss", command=self._dismissTypeChoice, font='{Copperplate Gothic Light} 14').pack(
+                fill=X)
 
     def _puzzleSetup(self):
         if not self.__puzzleSetupInProgress:
@@ -274,9 +290,12 @@ class gui(ui):
             self.__puzzleCode = StringVar()
             self.__puzzleCode.set("Enter Puzzle ID")
 
-            Label(frameUpper, text="Puzzles", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
-            Button(frameUpper, text="Create", command=self._puzzleCreate, font='{Copperplate Gothic Light} 14').pack(fill=X)
-            Button(frameUpper, text="Random", command=self._puzzleRandom, font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Label(frameUpper, text="Puzzles", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(
+                fill=X)
+            Button(frameUpper, text="Create", command=self._puzzleCreate, font='{Copperplate Gothic Light} 14').pack(
+                fill=X)
+            Button(frameUpper, text="Random", command=self._puzzleRandom, font='{Copperplate Gothic Light} 14').pack(
+                fill=X)
             Label(frameUpper, text="", bg='#9DE3FD').pack(fill=X)
             Entry(frameUpper, textvariable=self.__puzzleCode).pack(fill=X)
             Button(frameUpper, text="Load", command=self._puzzleLoad, font='{Copperplate Gothic Light} 14').pack(fill=X)
@@ -290,17 +309,22 @@ class gui(ui):
             self.__pOne.set("RED")
             self.__pTwo = StringVar()
             self.__pTwo.set("YELLOW")
-            Label(frameMiddle, text=f"Player 1 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=W)
+            Label(frameMiddle, text=f"Player 1 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0,
+                                                                                                                  column=0,
+                                                                                                                  sticky=W)
             pOneDropDown = OptionMenu(frameMiddle, self.__pOne, *self.__counters)
             pOneDropDown.configure(font='{Copperplate Gothic Light} 14')
             pOneDropDown.grid(row=0, column=1, sticky=W)
-            Label(frameMiddle, text=f"Player 2 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=W)
+            Label(frameMiddle, text=f"Player 2 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=1,
+                                                                                                                  column=0,
+                                                                                                                  sticky=W)
             pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters)
             pTwoDropDown.configure(font='{Copperplate Gothic Light} 14')
             pTwoDropDown.grid(row=1, column=1, sticky=W)
 
             # shape choices
-            Label(frameMiddle, text=f"Shape:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=2, column=0, sticky=W)
+            Label(frameMiddle, text=f"Shape:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=2, column=0,
+                                                                                                        sticky=W)
             self.__shape = StringVar()
             self.__shape.set("CIRCLE")
             shapes = ["CIRCLE", "SQUARE", "TRIANGLE"]
@@ -312,7 +336,8 @@ class gui(ui):
             frameLower.pack(fill=X)
 
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
-            Button(frameLower, text="Dismiss", font='{Copperplate Gothic Light} 14', command=self._dismissPuzzleSetup).pack(fill=X)
+            Button(frameLower, text="Dismiss", font='{Copperplate Gothic Light} 14',
+                   command=self._dismissPuzzleSetup).pack(fill=X)
 
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
             console = Listbox(frameLower, height=3)
@@ -366,7 +391,9 @@ class gui(ui):
                 t = StringVar()
                 t.set(col + 1)
                 cmd = lambda c=col: self.__playPuzzleMove(c)
-                Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0, column=col, sticky=N + S + W + E)
+                Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0,
+                                                                                                             column=col,
+                                                                                                             sticky=N + S + W + E)
 
             # resizing
             for col in range(7):
@@ -403,11 +430,18 @@ class gui(ui):
                     else:
                         counterColour = "white"
                     if self.__shape.get() == 'SQUARE':
-                        shape = board.create_rectangle(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)
+                        shape = board.create_rectangle(baseX1 + (column * tile), baseY1 + (row * tile),
+                                                       baseX2 + (column * tile), baseY2 + (row * tile),
+                                                       fill=counterColour)
                     elif self.__shape.get() == 'TRIANGLE':
-                        shape = board.create_polygon(baseX1 + counterSize / 2 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), baseX2 - counterSize + (column * tile), baseY2 + (row * tile), fill=counterColour)
+                        shape = board.create_polygon(baseX1 + counterSize / 2 + (column * tile), baseY1 + (row * tile),
+                                                     baseX2 + (column * tile), baseY2 + (row * tile),
+                                                     baseX2 - counterSize + (column * tile), baseY2 + (row * tile),
+                                                     fill=counterColour)
                     else:
-                        shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
+                        shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile),
+                                                  baseX2 + (column * tile), baseY2 + (row * tile),
+                                                  fill=counterColour)  # , dash=(7,1,1,1)
                     self.__spaces[row][column] = shape
             board.grid(row=1, columnspan=7)
             self.__canvas = board
@@ -425,22 +459,28 @@ class gui(ui):
                 player = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[
                     self.__pTwoColour]
                 t = f"PLAY THE BEST MOVE POSSIBLE FOR {player}"
-            Label(frameMenu, text=t, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N+S+E+W)
+            Label(frameMenu, text=t, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0,
+                                                                                           sticky=N + S + E + W)
 
             if create:
                 self.__creative = True
                 # puzzle id entry
-                Entry(frameMenu, textvariable=self.__puzzleID).grid(row=0, column=1, sticky=N+S+W+E)
+                Entry(frameMenu, textvariable=self.__puzzleID).grid(row=0, column=1, sticky=N + S + W + E)
                 # save button
-                Button(frameMenu, text="Save", command=self._savePuzzle, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N+S+W+E)
+                Button(frameMenu, text="Save", command=self._savePuzzle, font='{Copperplate Gothic Light} 14').grid(
+                    row=1, column=1, sticky=N + S + W + E)
             else:
                 self.__creative = False
                 # puzzle id label
-                Label(frameMenu, text=f"ID: {self.__puzzleCode}", font='{Copperplate Gothic Light} 14', bg='grey').grid(row=0, column=1, sticky=N+S+W+E)
+                Label(frameMenu, text=f"ID: {self.__puzzleCode}", font='{Copperplate Gothic Light} 14', bg='grey').grid(
+                    row=0, column=1, sticky=N + S + W + E)
                 # solve button
-                Button(frameMenu, text="Solve", command=self._solvePuzzle, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N+S+W+E)
+                Button(frameMenu, text="Solve", command=self._solvePuzzle, font='{Copperplate Gothic Light} 14').grid(
+                    row=1, column=1, sticky=N + S + W + E)
             # undo button
-            Button(frameMenu, text="Undo", command=self._undoMove, font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=N+S+W+E)
+            Button(frameMenu, text="Undo", command=self._undoMove, font='{Copperplate Gothic Light} 14').grid(row=1,
+                                                                                                              column=0,
+                                                                                                              sticky=N + S + W + E)
 
             frameBottom = Frame(puzzleWin, bg='#9DE3FD')
             frameBottom.pack(fill=X)
@@ -465,7 +505,8 @@ class gui(ui):
         elif not self._puzzleOver:
             try:
                 # set the counter colour
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[
+                    self.__pTwoColour]
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # animate the counter
@@ -499,8 +540,10 @@ class gui(ui):
         frame.pack()
         self.__solvedWin = solvedWin
 
-        Label(frame, text=f"CORRECT MOVE!", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
-        Label(frame, text="WELL DONE!", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(fill=X)
+        Label(frame, text=f"CORRECT MOVE!", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(
+            fill=X)
+        Label(frame, text="WELL DONE!", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(
+            fill=X)
         Button(frame, text="Exit", command=self._exitSolved, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
         # update stats
@@ -520,8 +563,10 @@ class gui(ui):
         frame.pack()
         self.__loseWin = loseWin
 
-        Label(frame, text=f"INCORRECT MOVE!", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
-        Label(frame, text="UNDO OR EXIT", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(fill=X)
+        Label(frame, text=f"INCORRECT MOVE!", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(
+            fill=X)
+        Label(frame, text="UNDO OR EXIT", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(
+            fill=X)
         Button(frame, text="Exit", command=self._exitLost, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
     def _exitLost(self):
@@ -539,7 +584,7 @@ class gui(ui):
 
         # try to save
         try:
-            self.__game.savePuzzle(ID,solution)
+            self.__game.savePuzzle(ID, solution)
             self._exitPuzzle()
 
             # update stats
@@ -559,7 +604,7 @@ class gui(ui):
     def _solvePuzzle(self, saving=False):
         if not self._puzzleOver:
             # create computer to get best move
-            computer = Ai("Easy AI") #"Hard AI"
+            computer = Ai("Easy AI")  # "Hard AI"
             # get best move
             column = computer.getColumn(self.__game.Board, self.__game.getPlayer)
             # if saving, return the column to be saved in the database
@@ -568,7 +613,8 @@ class gui(ui):
             # otherwise,
             else:
                 # play move
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[
+                    self.__pTwoColour]
                 row = 5 - self.__game.play(column + 1)
                 # animate drop
                 self.__animatedDrop(row, column, counter)
@@ -609,12 +655,14 @@ class gui(ui):
             clientCode += str(timeStamp[5])
             self.__clientCode = clientCode
 
-            Label(frameUpper, text=f"Local Play", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
+            Label(frameUpper, text=f"Local Play", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25,
+                  padx=45).pack(fill=X)
             Button(frameUpper, text="Host", command=self._hostGame, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
             Label(frameUpper, text="", bg='#9DE3FD').pack(fill=X)
             Entry(frameUpper, textvariable=self.__joinCode).pack(fill=X)
-            Button(frameUpper, text="Join", command=self._attemptJoin, font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Button(frameUpper, text="Join", command=self._attemptJoin, font='{Copperplate Gothic Light} 14').pack(
+                fill=X)
             Label(frameUpper, text="", bg='#9DE3FD').pack(fill=X)
 
             frameMiddle = Frame(LANSetupWin, bg='#9DE3FD')
@@ -625,17 +673,22 @@ class gui(ui):
             self.__pOne.set("RED")
             self.__pTwo = StringVar()
             self.__pTwo.set("YELLOW")
-            Label(frameMiddle, text=f"Player 1 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=W)
+            Label(frameMiddle, text=f"Player 1 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0,
+                                                                                                                  column=0,
+                                                                                                                  sticky=W)
             pOneDropDown = OptionMenu(frameMiddle, self.__pOne, *self.__counters)
             pOneDropDown.configure(font='{Copperplate Gothic Light} 14')
             pOneDropDown.grid(row=0, column=1, sticky=W)
-            Label(frameMiddle, text=f"Player 2 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=W)
+            Label(frameMiddle, text=f"Player 2 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=1,
+                                                                                                                  column=0,
+                                                                                                                  sticky=W)
             pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters)
             pTwoDropDown.configure(font='{Copperplate Gothic Light} 14')
             pTwoDropDown.grid(row=1, column=1, sticky=W)
 
             # shape choices
-            Label(frameMiddle, text=f"Shape:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=2, column=0, sticky=W)
+            Label(frameMiddle, text=f"Shape:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=2, column=0,
+                                                                                                        sticky=W)
             self.__shape = StringVar()
             self.__shape.set("CIRCLE")
             shapes = ["CIRCLE", "SQUARE", "TRIANGLE"]
@@ -646,7 +699,8 @@ class gui(ui):
             frameLower = Frame(LANSetupWin)
             frameLower.pack(fill=X)
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
-            Button(frameLower, text="Back", command=self._dismissLANSetup, font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Button(frameLower, text="Back", command=self._dismissLANSetup, font='{Copperplate Gothic Light} 14').pack(
+                fill=X)
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
             # console
             console = Listbox(frameLower, height=3)
@@ -664,9 +718,12 @@ class gui(ui):
             frame.pack()
             self.__hostWin = hostWin
 
-            Label(frame, text=f"Host Game", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
-            Label(frame, text=f"JOIN CODE: {self.__clientCode}", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(fill=X)
-            Label(frame, text="WAITING FOR OPPONENT...", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(fill=X)
+            Label(frame, text=f"Host Game", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(
+                fill=X)
+            Label(frame, text=f"JOIN CODE: {self.__clientCode}", bg='#9DE3FD', font='{Copperplate Gothic Light} 14',
+                  pady=5, padx=10).pack(fill=X)
+            Label(frame, text="WAITING FOR OPPONENT...", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5,
+                  padx=10).pack(fill=X)
             Label(frame, text="", bg='#9DE3FD').pack(fill=X)
             Button(frame, text="Back", command=self._dismissHost, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
@@ -701,7 +758,8 @@ class gui(ui):
             frameUpper = Frame(setupWin)
             frameUpper.pack(fill=X)
 
-            Label(frameUpper, text=f"Play", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
+            Label(frameUpper, text=f"Play", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(
+                fill=X)
 
             # first player
             self.__firstTurn = StringVar()
@@ -715,7 +773,9 @@ class gui(ui):
             frameMiddle.pack(fill=X)
 
             # opponent
-            Label(frameMiddle, text="Choose Opponent:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=W)
+            Label(frameMiddle, text="Choose Opponent:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0,
+                                                                                                                 column=0,
+                                                                                                                 sticky=W)
             options = ["Human", "Practice AI", "Easy AI", "Medium AI", "Hard AI"]
             self.__opponentType.set("Human")
             opponentDropDown = OptionMenu(frameMiddle, self.__opponentType, *options)
@@ -724,9 +784,11 @@ class gui(ui):
 
             # colour choices
             playerOne = "Player 1" if self.__guest else f"{self.__username.get()}"
-            Label(frameMiddle, text=f"{playerOne} colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=W)
+            Label(frameMiddle, text=f"{playerOne} colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(
+                row=1, column=0, sticky=W)
             playerTwo = "Player 2" if self.__guest else f"Opponent"
-            Label(frameMiddle, text=f"{playerTwo} colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=2, column=0, sticky=W)
+            Label(frameMiddle, text=f"{playerTwo} colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(
+                row=2, column=0, sticky=W)
             self.__pOne = StringVar()
             self.__pOne.set("RED")
             self.__pTwo = StringVar()
@@ -739,7 +801,8 @@ class gui(ui):
             pTwoDropDown.grid(row=2, column=1, sticky=W)
 
             # shape choices
-            Label(frameMiddle, text=f"Shape:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=3, column=0, sticky=W)
+            Label(frameMiddle, text=f"Shape:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=3, column=0,
+                                                                                                        sticky=W)
             self.__shape = StringVar()
             self.__shape.set("CIRCLE")
             shapes = ["CIRCLE", "SQUARE", "TRIANGLE"]
@@ -759,7 +822,8 @@ class gui(ui):
 
             # back button
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
-            Button(frameLower, text="Back", command=self._dismissSetup, font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Button(frameLower, text="Back", command=self._dismissSetup, font='{Copperplate Gothic Light} 14').pack(
+                fill=X)
 
             # create a game object
             self.__game = game()
@@ -830,19 +894,22 @@ class gui(ui):
             self.__helpWin = helpWin
 
             Label(frame, text=f"Help", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
-            #rule display
-            Label(frame, text="Take it in turns to  drop counters into the board.", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').pack(fill=X)
-            Label(frame, text="First person to get a vertical, horizontal or diagonal run of four counters wins!", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').pack(fill=X)
-            Label(frame, text="If the board fills and nobody has a run of four yet then the game is drawn.", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').pack(fill=X)
+            # rule display
+            Label(frame, text="Take it in turns to  drop counters into the board.", bg='#9DE3FD',
+                  font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Label(frame, text="First person to get a vertical, horizontal or diagonal run of four counters wins!",
+                  bg='#9DE3FD', font='{Copperplate Gothic Light} 14').pack(fill=X)
+            Label(frame, text="If the board fills and nobody has a run of four yet then the game is drawn.",
+                  bg='#9DE3FD', font='{Copperplate Gothic Light} 14').pack(fill=X)
 
-            #dismiss button
+            # dismiss button
             Label(frame, text="", bg='#9DE3FD').pack(fill=X)
             Button(frame, text="Dismiss", command=self._dismissHelp, font='{Copperplate Gothic Light} 14').pack(fill=X)
-    
+
     def _play(self):
         # print(self.__opponentType.get())
         if not self.__gameInProgress:
-            if self.__setupInProgress == True:
+            if self.__setupInProgress:
                 self._dismissSetup()
             else:
                 self.__game = game()
@@ -871,7 +938,9 @@ class gui(ui):
                 t = StringVar()
                 t.set(col + 1)
                 cmd = lambda c=col: self.__playMove(c)
-                Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0, column=col, sticky=E+W)
+                Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0,
+                                                                                                             column=col,
+                                                                                                             sticky=E + W)
 
             # resizing
             for col in range(7):
@@ -911,11 +980,18 @@ class gui(ui):
                     else:
                         counterColour = "white"
                     if self.__shape.get() == 'SQUARE':
-                        shape = board.create_rectangle(baseX1 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), fill=counterColour)
+                        shape = board.create_rectangle(baseX1 + (column * tile), baseY1 + (row * tile),
+                                                       baseX2 + (column * tile), baseY2 + (row * tile),
+                                                       fill=counterColour)
                     elif self.__shape.get() == 'TRIANGLE':
-                        shape = board.create_polygon(baseX1 + counterSize/2 + (column*tile), baseY1 + (row*tile), baseX2 + (column*tile), baseY2 + (row*tile), baseX2 - counterSize + (column*tile), baseY2 + (row*tile), fill=counterColour)
+                        shape = board.create_polygon(baseX1 + counterSize / 2 + (column * tile), baseY1 + (row * tile),
+                                                     baseX2 + (column * tile), baseY2 + (row * tile),
+                                                     baseX2 - counterSize + (column * tile), baseY2 + (row * tile),
+                                                     fill=counterColour)
                     else:
-                        shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
+                        shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile),
+                                                  baseX2 + (column * tile), baseY2 + (row * tile),
+                                                  fill=counterColour)  # , dash=(7,1,1,1)
                     self.__spaces[row][column] = shape
             board.grid(row=1, columnspan=7)
             self.__canvas = board
@@ -937,15 +1013,20 @@ class gui(ui):
             else:
                 self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
 
-            Label(frameMenu, textvariable=self.__playerTurn, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N+S+E+W)
+            Label(frameMenu, textvariable=self.__playerTurn, bg='gray', font='{Copperplate Gothic Light} 14').grid(
+                row=0, column=0, sticky=N + S + E + W)
             # dismiss button
-            Button(frameMenu, text="Dismiss", command=self._dismissGame, font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=N+S+E+W)
+            Button(frameMenu, text="Dismiss", command=self._dismissGame, font='{Copperplate Gothic Light} 14').grid(
+                row=1, column=0, sticky=N + S + E + W)
 
             if not self._network:
                 # undo button
-                Button(frameMenu, text="Undo", command=self._undoMove, font='{Copperplate Gothic Light} 14').grid(row=0, column=1, sticky=N+S+E+W)
+                Button(frameMenu, text="Undo", command=self._undoMove, font='{Copperplate Gothic Light} 14').grid(row=0,
+                                                                                                                  column=1,
+                                                                                                                  sticky=N + S + E + W)
                 # save and exit button
-                Button(frameMenu, text="Save and Exit", command=self._saveAndExit, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N+S+E+W)
+                Button(frameMenu, text="Save and Exit", command=self._saveAndExit,
+                       font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N + S + E + W)
 
             frameConsole = Frame(gameWin, bg='#9DE3FD')
             frameConsole.pack(fill=X)
@@ -954,7 +1035,7 @@ class gui(ui):
             console.pack(fill=X)
             self.__gameConsole = console
             if self._network:
-                self.__gameConsole.insert(END, f"1| local game")
+                self.__gameConsole.insert(END, f"1| local game (this is {self.__username.get()})")
             else:
                 self.__gameConsole.insert(END, f"1| game against {self.__opponentType.get()}")
 
@@ -1031,7 +1112,7 @@ class gui(ui):
 
     def __playMove(self, col):
         # if a counter is falling or the client is waiting for the opponent to move, print a wait message
-        if self.__animating: #  or not self._clientTurn
+        if self.__animating:  # or not self._clientTurn
             self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
             if self.__gameConsole.size() > 3:
                 self.__gameConsole.yview_scroll(1, UNITS)
@@ -1040,7 +1121,8 @@ class gui(ui):
         elif not self.__game.getWinner:
             try:
                 # set the counter colour
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[
+                    self.__pTwoColour]
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # if playing a networked game send the move to the opponent
@@ -1082,7 +1164,8 @@ class gui(ui):
             # if it's a game against the AI, play the AI's move
             if self.__opponentType.get() != "Human" and not self.__game.getWinner:
                 # AI move
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[
+                    self.__pTwoColour]
                 col = self.__opponent.getColumn(self.__game.Board, self.__game.getPlayer)
                 row = 5 - self.__game.play(col + 1)
                 # animate drop
@@ -1098,7 +1181,8 @@ class gui(ui):
         if winningPlayer:
             self.__gameOver = True
             if self.__game.getWinner != "Draw":
-                winner = self.__counters[self.__pOneColour] if self.__game.getWinner == game.PONE else self.__counters[self.__pTwoColour]
+                winner = self.__counters[self.__pOneColour] if self.__game.getWinner == game.PONE else self.__counters[
+                    self.__pTwoColour]
                 if self.__opponentType.get() == "Human":
                     self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
                 else:
@@ -1109,7 +1193,8 @@ class gui(ui):
 
             # highlight winning run
             if run:
-                counter = self.__highlights[self.__pOneColour] if winningPlayer == game.PONE else self.__highlights[self.__pTwoColour]
+                counter = self.__highlights[self.__pOneColour] if winningPlayer == game.PONE else self.__highlights[
+                    self.__pTwoColour]
                 for row, col in run:
                     self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
 
@@ -1240,24 +1325,24 @@ class terminal(ui):
 
     async def run(self):
         if self._network:
-            #if playing a networked game:
-            #initialise a client object
+            # if playing a networked game:
+            # initialise a client object
             self._client = client()
-            #allow the user to enter a username
+            # allow the user to enter a username
             self._name = await ainput("Enter a username: ")
             try:
-                #hosting or joining?
+                # hosting or joining?
                 playerType = await ainput("Would you like to host a game or join a game? [h|j]\n")
                 if playerType == 'h':
-                    #if hosting, send a host command
+                    # if hosting, send a host command
                     await self._client.send({"from": self._name, "cmd": "tHost"})
                     self._hosting = True
-                #if joining
+                # if joining
                 elif playerType == 'j':
-                        #ask for the name of the host
-                        hostName = await ainput("Enter the host's username: ")
-                        #send a join command to the host
-                        await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
+                    # ask for the name of the host
+                    hostName = await ainput("Enter the host's username: ")
+                    # send a join command to the host
+                    await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
                 else:
                     raise hostError
             except hostError:

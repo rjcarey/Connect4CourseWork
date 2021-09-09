@@ -49,7 +49,7 @@ class client:
         async with connect(self._uri) as websocket:
             # done = completed tasks, pending = uncompleted tasks
             # repeat call consumer handler then call producer handler until the first task is complete
-            done, pending = await wait([create_task(self._consumer_handler(websocket)), create_task(self._producer_handler(websocket))],return_when=FIRST_COMPLETED)
+            done, pending = await wait([create_task(self._consumer_handler(websocket)), create_task(self._producer_handler(websocket))], return_when=FIRST_COMPLETED)
             # cancel remaining tasks
             for task in pending:
                 task.cancel()

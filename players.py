@@ -1,5 +1,6 @@
 from random import randint
 
+
 class Ai:
     def __init__(self, difficulty):
         self.__difficulty = difficulty
