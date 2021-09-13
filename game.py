@@ -237,3 +237,7 @@ class game:
     def getSpace(self, row, column):
         # return the counter at coordinates passed in
         return self.Board[row][column]
+
+    def loadAI(self, board, counter):
+        self.Board = board
+        self._Player = counter

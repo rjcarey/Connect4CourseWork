@@ -154,7 +154,7 @@ class gui(ui):
             console.pack(fill=X)
             self.__createAccountConsole = console
 
-            Button(frame, text="Cancel", command=self._cancelCreate).pack(fill=X)
+            Button(frame, text="Cancel", command=self._cancelCreate, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
     def _addAccount(self):
         if self.__pWord.get() == self.__confPWord.get():
@@ -938,9 +938,7 @@ class gui(ui):
                 t = StringVar()
                 t.set(col + 1)
                 cmd = lambda c=col: self.__playMove(c)
-                Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0,
-                                                                                                             column=col,
-                                                                                                             sticky=E + W)
+                Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0, column=col, sticky=E + W)
 
             # resizing
             for col in range(7):

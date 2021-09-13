@@ -1,11 +1,14 @@
 from random import randint
-
+from game import game, gameError
+from copy import deepcopy
 
 class Ai:
     def __init__(self, difficulty):
         self.__difficulty = difficulty
 
     def getColumn(self, board, counter):
+        self.__aiCounter = counter
+        self.__playerCounter = "❂" if counter != "❂" else "⍟"
         if self.__difficulty == "Practice AI":
             move = self.practiceAI(board)
         elif self.__difficulty == "Easy AI":
@@ -28,7 +31,7 @@ class Ai:
         return col
 
     def easyAI(self, board, counter):
-        scores = [0,0,0,0,0,0,0]
+        scores = [0, 0, 0, 0, 0, 0, 0]
         for column in range(7):
             # print(f"column {column + 1}:")
             # check for full row
@@ -186,12 +189,131 @@ class Ai:
         return maxIndex[index]
 
     def mediumAI(self, board):
-        # low depth minimax
-        return move
+        boards = self.nextBoards(board, self.__aiCounter)
+        boardList = []
+        for key in boards.keys():
+            boardList.append((key, boards[key]))
+        moves = []
+        value = -9999999
+        for newBoard in boards.values():
+            newVal = self.myMiniMax(3, newBoard, False)
+            for item in boardList:
+                if item[1] == newBoard:
+                    move = item[0]
+            if newVal > value:
+                value = newVal
+                moves = [move]
+            elif newVal == value:
+                value += newVal
+                moves.append(move)
+        if len(moves) > 1:
+            return moves[randint(0, len(moves) - 1)]
+        else:
+            return moves[0]
 
     def hardAI(self, board):
         # medium depth minimax and trapping
         return move
 
     def myMiniMax(self, depth, board, aiTurn):
-        pass
+        end = self.checkTerminal(board)
+        if depth == 0 or end is not None:
+            if end == self.__aiCounter:
+                return 9999999 if depth == 1 else 1
+            elif end == self.__playerCounter:
+                return -9999999 if depth == 1 else -1
+            else:
+                return 0
+        if aiTurn:
+            value = -9999999
+            newBoards = self.nextBoards(board, self.__aiCounter)
+            for newBoard in newBoards.values():
+                newVal = self.myMiniMax(depth-1, newBoard, False)
+                if newVal > value:
+                    value = newVal
+                elif newVal == value:
+                    value += newVal
+            return value
+        else:
+            value = 9999999
+            newBoards = self.nextBoards(board, self.__playerCounter)
+            for newBoard in newBoards.values():
+                newVal = self.myMiniMax(depth - 1, newBoard, True)
+                if newVal < value:
+                    value = newVal
+                elif newVal == value:
+                    value += newVal
+            return value
+
+    def nextBoards(self, board, counter):
+        boards = {}
+        for iC, column in enumerate(board[0]):
+            if column == " ":
+                newBoard = game()
+                newBoard.loadAI(deepcopy(board), counter)
+                boards[iC] = newBoard.Board
+        return boards
+
+    def checkTerminal(self, board):
+        # check horizontal
+        player = " "
+        counters = []
+        for ir, row in enumerate(board):
+            run = 0
+            for ic, col in enumerate(row):
+                if col == player:
+                    run += 1
+                    counters.append((ir, ic))
+                    if run == 4 and player != " ":
+                        return player # , counters
+                else:
+                    player = col
+                    counters = [(ir, ic)]
+                    run = 1
+
+        # check vertical
+        player = " "
+        counters = []
+        for column in range(7):
+            run = 0
+            for row in range(6):
+                if board[row][column] == player:
+                    run += 1
+                    counters.append((row, column))
+                    if run == 4 and player != " ":
+                        return player # , counters
+                else:
+                    player = board[row][column]
+                    counters = [(row, column)]
+                    run = 1
+
+        # check diagonal
+        for rowNum, row in enumerate(board):
+            for colNum, col in enumerate(row):
+                if col != " ":
+                    # \ diagonal
+                    if colNum < 4 and rowNum < 3:
+                        counterOne = board[rowNum][colNum]
+                        counterTwo = board[rowNum + 1][colNum + 1]
+                        counterThree = board[rowNum + 2][colNum + 2]
+                        counterFour = board[rowNum + 3][colNum + 3]
+                        if counterOne == counterTwo == counterThree == counterFour:
+                            return col # , [(rowNum, colNum), (rowNum + 1, colNum + 1), (rowNum + 2, colNum + 2), (rowNum + 3, colNum + 3)]
+
+                    # / diagonal
+                    if colNum > 2 and rowNum < 3:
+                        counterOne = board[rowNum][colNum]
+                        counterTwo = board[rowNum + 1][colNum - 1]
+                        counterThree = board[rowNum + 2][colNum - 2]
+                        counterFour = board[rowNum + 3][colNum - 3]
+                        if counterOne == counterTwo == counterThree == counterFour:
+                            return col # , [(rowNum, colNum), (rowNum + 1, colNum - 1), (rowNum + 2, colNum - 2), (rowNum + 3, colNum - 3)]
+        # check draw
+        occupiedCount = 0
+        for row in board:
+            for col in row:
+                if col != " ":
+                    occupiedCount += 1
+        if occupiedCount == 42:
+            return "Draw" # , []
+        return None # , []
