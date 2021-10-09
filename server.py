@@ -40,7 +40,7 @@ class server:
                 # complete send the message to each device in connections
                 await wait([create_task(device.send(message)) for device in self._connections])
 
-    async def _server(self, websocket, path):
+    async def _server(self, websocket):
         # register connection
         self._connections.add(websocket)
         try:

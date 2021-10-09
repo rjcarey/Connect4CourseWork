@@ -58,8 +58,9 @@ async def startGame():
                     continue
             if choice == "n":
                 break
-            ui = terminal()
-            ui.run()
+            ui = terminal(network)
+            tasks = [create_task(ui.run())]
+            await gather(*tasks)
 
 if __name__ == "__main__":
     # run the game

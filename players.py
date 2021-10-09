@@ -3,14 +3,18 @@ from game import game
 from copy import deepcopy
 from collections import defaultdict as dd
 
+
 class Ai:
     def __init__(self, difficulty):
         self.__difficulty = difficulty
-        self.__priorList = [3,2,4,1,5,0,6]
+        self.__priorList = [3, 2, 4, 1, 5, 0, 6]
+        self.__aiCounter = None
+        self.__playerCounter = None
 
     def getColumn(self, board, counter):
+        move = None
         self.__aiCounter = counter
-        self.__playerCounter = "❂" if counter != "❂" else "⍟"
+        self.__playerCounter = game.PONE if counter != game.PONE else game.PTWO
         if self.__difficulty == "Practice AI":
             move = self.practiceAI(board)
         elif self.__difficulty == "Easy AI":
@@ -23,7 +27,8 @@ class Ai:
         # return the ai's move
         return move
 
-    def practiceAI(self, board):
+    @staticmethod
+    def practiceAI(board):
         col = -1
         while col == -1:
             # play random column
@@ -44,6 +49,7 @@ class Ai:
 
             # find the row that would be played in
             # print(board)
+            playedRow = None
             for i, row in enumerate(board):
                 # print(f"{i}, {row}")
                 if row[column] != " ":
@@ -258,7 +264,8 @@ class Ai:
                 value = 2 * value
             return value
 
-    def nextBoards(self, board, counter):
+    @staticmethod
+    def nextBoards(board, counter):
         boards = {}
         for iC, column in enumerate(board[0]):
             if column == " ":
@@ -268,7 +275,8 @@ class Ai:
                 boards[iC] = newBoard.Board
         return boards
 
-    def checkTerminal(self, board):
+    @staticmethod
+    def checkTerminal(board):
         # check horizontal
         player = " "
         counters = []
@@ -279,7 +287,7 @@ class Ai:
                     run += 1
                     counters.append((ir, ic))
                     if run == 4 and player != " ":
-                        return player # , counters
+                        return player  # , counters
                 else:
                     player = col
                     counters = [(ir, ic)]
@@ -295,7 +303,7 @@ class Ai:
                     run += 1
                     counters.append((row, column))
                     if run == 4 and player != " ":
-                        return player # , counters
+                        return player  # , counters
                 else:
                     player = board[row][column]
                     counters = [(row, column)]
@@ -312,7 +320,7 @@ class Ai:
                         counterThree = board[rowNum + 2][colNum + 2]
                         counterFour = board[rowNum + 3][colNum + 3]
                         if counterOne == counterTwo == counterThree == counterFour:
-                            return col # , [(rowNum, colNum), (rowNum + 1, colNum + 1), (rowNum + 2, colNum + 2), (rowNum + 3, colNum + 3)]
+                            return col  # , [(rowNum, colNum), (rowNum + 1, colNum + 1), (rowNum + 2, colNum + 2), (rowNum + 3, colNum + 3)]
 
                     # / diagonal
                     if colNum > 2 and rowNum < 3:
@@ -321,7 +329,7 @@ class Ai:
                         counterThree = board[rowNum + 2][colNum - 2]
                         counterFour = board[rowNum + 3][colNum - 3]
                         if counterOne == counterTwo == counterThree == counterFour:
-                            return col # , [(rowNum, colNum), (rowNum + 1, colNum - 1), (rowNum + 2, colNum - 2), (rowNum + 3, colNum - 3)]
+                            return col  # , [(rowNum, colNum), (rowNum + 1, colNum - 1), (rowNum + 2, colNum - 2), (rowNum + 3, colNum - 3)]
         # check draw
         occupiedCount = 0
         for row in board:
@@ -329,5 +337,5 @@ class Ai:
                 if col != " ":
                     occupiedCount += 1
         if occupiedCount == 42:
-            return "Draw" # , []
-        return None # , []
+            return "Draw"  # , []
+        return None  # , []
