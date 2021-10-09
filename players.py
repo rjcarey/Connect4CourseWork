@@ -1,10 +1,12 @@
 from random import randint
-from game import game, gameError
+from game import game
 from copy import deepcopy
+from collections import defaultdict as dd
 
 class Ai:
     def __init__(self, difficulty):
         self.__difficulty = difficulty
+        self.__priorList = [3,2,4,1,5,0,6]
 
     def getColumn(self, board, counter):
         self.__aiCounter = counter
@@ -16,7 +18,7 @@ class Ai:
         elif self.__difficulty == "Medium AI":
             move = self.mediumAI(board)
         elif self.__difficulty == "Hard AI":
-            move = self.hardAI(board)
+            move = self.hardAI(board, counter)
 
         # return the ai's move
         return move
@@ -69,108 +71,79 @@ class Ai:
 
             score = 0
             currentScore = 0
-            if upOne and leftOne:
-                if board[playedRow - 1][column - 1] == counter:
-                    # print("upOne and leftOne")
-                    currentScore += 1
-                    if upTwo and leftTwo:
-                        if board[playedRow - 2][column - 2] == counter:
-                            # print("upTwo and leftTwo")
-                            currentScore *= 2
-                            if upThree and leftThree:
-                                if board[playedRow - 3][column - 3] == counter:
-                                    # print("upThree and leftThree")
-                                    currentScore *= 9999
+            # \ diagonal
+            if (upOne and leftOne) and board[playedRow - 1][column - 1] == counter:
+                currentScore += 1
+                if (upTwo and leftTwo) and board[playedRow - 2][column - 2] == counter:
+                    currentScore *= 2
+                    if (upThree and leftThree) and board[playedRow - 3][column - 3] == counter:
+                        currentScore *= 9999
+                    elif (downOne and rightOne) and board[playedRow + 1][column + 1] == counter:
+                        currentScore *= 9999
+                elif (downOne and rightOne) and board[playedRow + 1][column + 1] == counter:
+                    currentScore *= 2
+                    if (downTwo and rightTwo) and board[playedRow + 2][column + 2] == counter:
+                        currentScore *= 9999
+            elif (downOne and rightOne) and board[playedRow + 1][column + 1] == counter:
+                currentScore += 1
+                if (downTwo and rightTwo) and board[playedRow + 2][column + 2] == counter:
+                    currentScore *= 2
+                    if (downThree and rightThree) and board[playedRow + 3][column + 3] == counter:
+                        currentScore *= 9999
 
             score += currentScore
             currentScore = 0
-            if leftOne:
-                if board[playedRow][column - 1] == counter:
-                    # print("leftOne")
-                    currentScore += 1
-                    if leftTwo:
-                        if board[playedRow][column - 2] == counter:
-                            # print("leftTwo")
-                            currentScore *= 2
-                            if leftThree:
-                                if board[playedRow][column - 3] == counter:
-                                    # print("leftThree")
-                                    currentScore *= 9999
+            # / diagonal
+            if (downOne and leftOne) and board[playedRow + 1][column - 1] == counter:
+                currentScore += 1
+                if (downTwo and leftTwo) and board[playedRow + 2][column - 2] == counter:
+                    currentScore *= 2
+                    if (downThree and leftThree) and board[playedRow + 3][column - 3] == counter:
+                        currentScore *= 9999
+                    elif (upOne and rightOne) and board[playedRow - 1][column + 1] == counter:
+                        currentScore *= 9999
+                elif (upOne and rightOne) and board[playedRow - 1][column + 1] == counter:
+                    currentScore *= 2
+                    if (upTwo and rightTwo) and board[playedRow - 2][column + 2] == counter:
+                        currentScore *= 9999
+            elif (upOne and rightOne) and board[playedRow - 1][column + 1] == counter:
+                currentScore += 1
+                if (upTwo and rightTwo) and board[playedRow - 2][column + 2] == counter:
+                    currentScore *= 2
+                    if (upThree and rightThree) and board[playedRow - 3][column + 3] == counter:
+                        currentScore *= 999
 
             score += currentScore
             currentScore = 0
-            if downOne and leftOne:
-                if board[playedRow + 1][column - 1] == counter:
-                    # print("downOne and leftOne")
-                    currentScore += 1
-                    if downTwo and leftTwo:
-                        if board[playedRow + 2][column - 2] == counter:
-                            # print("downTwo and leftTwo")
-                            currentScore *= 2
-                            if downThree and leftThree:
-                                if board[playedRow + 3][column - 3] == counter:
-                                    # print("downThree and leftThree")
-                                    currentScore *= 9999
+            # Across
+            if leftOne and board[playedRow][column - 1] == counter:
+                currentScore += 1
+                if leftTwo and board[playedRow][column - 2] == counter:
+                    currentScore *= 2
+                    if leftThree and board[playedRow][column - 3] == counter:
+                        currentScore *= 9999
+                    elif rightOne and board[playedRow][column + 1] == counter:
+                        currentScore *= 9999
+                elif rightOne and board[playedRow][column + 1] == counter:
+                    currentScore *= 2
+                    if rightTwo and board[playedRow][column + 2] == counter:
+                        currentScore *= 9999
+            elif rightOne and board[playedRow][column + 1] == counter:
+                currentScore += 1
+                if rightTwo and board[playedRow][column + 2] == counter:
+                    currentScore *= 2
+                    if rightThree and board[playedRow][column + 3] == counter:
+                        currentScore *= 9999
 
             score += currentScore
             currentScore = 0
-            if downOne:
-                if board[playedRow + 1][column] == counter:
-                    # print("downOne")
-                    currentScore += 1
-                    if downTwo:
-                        if board[playedRow + 2][column] == counter:
-                            # print("downTwo")
-                            currentScore *= 2
-                            if downThree:
-                                if board[playedRow + 3][column] == counter:
-                                    # print("downThree")
-                                    currentScore *= 9999
-
-            score += currentScore
-            currentScore = 0
-            if downOne and rightOne:
-                if board[playedRow + 1][column + 1] == counter:
-                    # print("downOne and rightOne")
-                    currentScore += 1
-                    if downTwo and rightTwo:
-                        if board[playedRow + 2][column + 2] == counter:
-                            # print("downTwo and rightTwo")
-                            currentScore *= 2
-                            if downThree and rightThree:
-                                if board[playedRow + 3][column + 3] == counter:
-                                    # print("downThree and rightThree")
-                                    currentScore *= 9999
-
-            score += currentScore
-            currentScore = 0
-            if rightOne:
-                if board[playedRow][column + 1] == counter:
-                    # print("rightOne")
-                    currentScore += 1
-                    if rightTwo:
-                        if board[playedRow][column + 2] == counter:
-                            # print("rightTwo")
-                            currentScore *= 2
-                            if rightThree:
-                                if board[playedRow][column + 3] == counter:
-                                    # print(rightThree)
-                                    currentScore *= 9999
-
-            score += currentScore
-            currentScore = 0
-            if upOne and rightOne:
-                if board[playedRow - 1][column + 1] == counter:
-                    # print("upOne and rightOne")
-                    currentScore += 1
-                    if upTwo and rightTwo:
-                        if board[playedRow - 2][column + 2] == counter:
-                            # print("upTwo and rightTwo")
-                            currentScore *= 2
-                            if upThree and rightThree:
-                                if board[playedRow - 3][column + 3] == counter:
-                                    # print("upThree and rightThree")
-                                    currentScore *= 9999
+            # Down
+            if downOne and board[playedRow + 1][column] == counter:
+                currentScore += 1
+                if downTwo and board[playedRow + 2][column] == counter:
+                    currentScore *= 2
+                    if downThree and board[playedRow + 3][column] == counter:
+                        currentScore *= 9999
 
             score += currentScore
             scores[column] = score
@@ -185,64 +158,104 @@ class Ai:
                 maxIndex = [i]
             elif maxScore == score:
                 maxIndex.append(i)
-        index = 0 if len(maxIndex) == 1 else randint(0, len(maxIndex) - 1)
-        return maxIndex[index]
+        for move in self.__priorList:
+            if move in maxIndex:
+                return move
 
     def mediumAI(self, board):
         boards = self.nextBoards(board, self.__aiCounter)
         boardList = []
-        for key in boards.keys():
-            boardList.append((key, boards[key]))
         moves = []
+        for key in boards.keys():
+            boardList.append((key, boards[key], self.medMiniMax(3, boards[key], False)))
         value = -9999999
-        for newBoard in boards.values():
-            newVal = self.myMiniMax(3, newBoard, False)
-            for item in boardList:
-                if item[1] == newBoard:
-                    move = item[0]
-            if newVal > value:
-                value = newVal
-                moves = [move]
-            elif newVal == value:
-                value += newVal
-                moves.append(move)
-        if len(moves) > 1:
-            return moves[randint(0, len(moves) - 1)]
-        else:
-            return moves[0]
+        for newBoard in boardList:
+            if newBoard[2] > value:
+                value = newBoard[2]
+                moves = [newBoard[0]]
+            elif newBoard[2] == value:
+                moves.append(newBoard[0])
+        for move in self.__priorList:
+            if move in moves:
+                return move
 
-    def hardAI(self, board):
-        # medium depth minimax and trapping
-        return move
+    def hardAI(self, board, counter):
+        # include trapping, traps can be detected be detected by checking if there all the children node are 1 (winning trap) or all the children nodes are -1 (losing trap)
+        boards = self.nextBoards(board, self.__aiCounter)
+        boardList = []
+        moves = []
+        for key in boards.keys():
+            boardList.append((key, boards[key], self.hardMiniMax(5, boards[key], False)))
+        value = -9999999
+        for newBoard in boardList:
+            if newBoard[2] > value:
+                value = newBoard[2]
+                moves = [newBoard[0]]
+            elif newBoard[2] == value:
+                moves.append(newBoard[2])
+        if len(moves) == 7:
+            return self.easyAI(board, counter)
+        for move in self.__priorList:
+            if move in moves:
+                return move
 
-    def myMiniMax(self, depth, board, aiTurn):
+    def medMiniMax(self, depth, board, aiTurn):
         end = self.checkTerminal(board)
         if depth == 0 or end is not None:
             if end == self.__aiCounter:
-                return 9999999 if depth == 1 else 1
+                return 1 + depth
             elif end == self.__playerCounter:
-                return -9999999 if depth == 1 else -1
+                return -1 - depth
             else:
                 return 0
         if aiTurn:
             value = -9999999
             newBoards = self.nextBoards(board, self.__aiCounter)
             for newBoard in newBoards.values():
-                newVal = self.myMiniMax(depth-1, newBoard, False)
+                newVal = self.medMiniMax(depth-1, newBoard, False)
                 if newVal > value:
                     value = newVal
-                elif newVal == value:
-                    value += newVal
             return value
         else:
             value = 9999999
             newBoards = self.nextBoards(board, self.__playerCounter)
             for newBoard in newBoards.values():
-                newVal = self.myMiniMax(depth - 1, newBoard, True)
+                newVal = self.medMiniMax(depth - 1, newBoard, True)
                 if newVal < value:
                     value = newVal
-                elif newVal == value:
-                    value += newVal
+            return value
+
+    def hardMiniMax(self, depth, board, aiTurn):
+        depthValues = dd(lambda: 0)
+        end = self.checkTerminal(board)
+        if depth == 0 or end is not None:
+            if end == self.__aiCounter:
+                return 1 + depth
+            elif end == self.__playerCounter:
+                return -1 - depth
+            else:
+                return 0
+        if aiTurn:
+            value = -9999999
+            newBoards = self.nextBoards(board, self.__aiCounter)
+            for newBoard in newBoards.values():
+                newVal = self.hardMiniMax(depth-1, newBoard, False)
+                depthValues[newVal] += 1
+                if newVal > value:
+                    value = newVal
+            if len(depthValues) == 1:
+                value = 2 * value
+            return value
+        else:
+            value = 9999999
+            newBoards = self.nextBoards(board, self.__playerCounter)
+            for newBoard in newBoards.values():
+                newVal = self.hardMiniMax(depth - 1, newBoard, True)
+                depthValues[newVal] += 1
+                if newVal < value:
+                    value = newVal
+            if len(depthValues) == 1:
+                value = 2 * value
             return value
 
     def nextBoards(self, board, counter):
@@ -251,6 +264,7 @@ class Ai:
             if column == " ":
                 newBoard = game()
                 newBoard.loadAI(deepcopy(board), counter)
+                newBoard.play(iC+1)
                 boards[iC] = newBoard.Board
         return boards
 

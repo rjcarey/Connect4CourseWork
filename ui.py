@@ -393,7 +393,7 @@ class gui(ui):
                 cmd = lambda c=col: self.__playPuzzleMove(c)
                 Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0,
                                                                                                              column=col,
-                                                                                                             sticky=N + S + W + E)
+                                                                                                             sticky=N+S+W+E)
 
             # resizing
             for col in range(7):
@@ -604,7 +604,7 @@ class gui(ui):
     def _solvePuzzle(self, saving=False):
         if not self._puzzleOver:
             # create computer to get best move
-            computer = Ai("Easy AI")  # "Hard AI"
+            computer = Ai("Hard AI")
             # get best move
             column = computer.getColumn(self.__game.Board, self.__game.getPlayer)
             # if saving, return the column to be saved in the database
@@ -1160,6 +1160,7 @@ class gui(ui):
                     self.__waitingForMove = True
 
             # if it's a game against the AI, play the AI's move
+            self.__canvas.update()
             if self.__opponentType.get() != "Human" and not self.__game.getWinner:
                 # AI move
                 counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[
