@@ -29,7 +29,7 @@ class ui(ABC):
         raise NotImplementedError
 
 
-# WINDOWS: main, _puzzleGame, _puzzleWin, _puzzleLose, _LANSetup, _hostGame, _play, _saveAndExit
+# WINDOWS: main, _puzzleWin, _puzzleLose, _LANSetup, _hostGame
 class gui(ui):
     def __init__(self, network):
         self._network = network
@@ -49,10 +49,9 @@ class gui(ui):
         self.__typeChoiceCreated = False
         self.__LANSetupInProgress = False
         self.__localInProgress = False
-        self.__saveInProgress = False
+        self.__saveCreated = False
         self.__loadCreated = False
         self.__puzzleSetupCreated = False
-        self.__puzzleInProgress = False
         self.__gameOver = False
         self.__animating = False
         self.__menuFrameCreated = False
@@ -296,10 +295,11 @@ class gui(ui):
 
     def _puzzleSetup(self):
         self.__unPack()
+        self.__game = game()
         if not self.__puzzleSetupCreated:
             self.__puzzleSetupCreated = True
             frameUpper = Frame(self.__root)
-            frameUpper.pack(fill=X)
+            frameUpper.pack()
 
             self.__puzzleCode = StringVar()
             self.__puzzleCode.set("Enter Puzzle ID")
@@ -313,7 +313,7 @@ class gui(ui):
             Label(frameUpper, text="", bg='#9DE3FD').pack(fill=X)
 
             frameMiddle = Frame(self.__root, bg='#9DE3FD')
-            frameMiddle.pack(fill=X)
+            frameMiddle.pack()
 
             # colour choices
             self.__pOne = StringVar()
@@ -344,7 +344,7 @@ class gui(ui):
             shapeDropDown.grid(row=2, column=1, sticky=W)
 
             frameLower = Frame(self.__root)
-            frameLower.pack(fill=X)
+            frameLower.pack()
 
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
             Button(frameLower, text="Dismiss", font='{Copperplate Gothic Light} 14',
@@ -364,11 +364,11 @@ class gui(ui):
             self.__puzzleUpper.pack()
             self.__puzzleMiddle.pack()
             self.__puzzleLower.pack()
+
         self.__quitFrame.pack()
         self.__toUnpack.append(self.__puzzleUpper)
         self.__toUnpack.append(self.__puzzleMiddle)
         self.__toUnpack.append(self.__puzzleLower)
-        self.__game = game()
 
     def _puzzleCreate(self):
         self._puzzleGame(create=True)
@@ -379,7 +379,7 @@ class gui(ui):
 
     def _puzzleLoad(self):
         try:
-            self.__puzzleSolution, self.__puzzleCode = self.__game.loadPuzzle(self.__puzzleCode.get())
+            self.__puzzleSolution, self.__loadPuzzleID = self.__game.loadPuzzle(self.__puzzleCode.get())
             self._puzzleGame()
         except nameError as e:
             # print error message to console
@@ -389,119 +389,120 @@ class gui(ui):
                 self.__puzzleSetupConsole.yview_scroll(1, UNITS)
 
     def _puzzleGame(self, create=False):
-        if not self.__puzzleInProgress:
-            self._dismissPuzzleSetup()
-            self.__puzzleInProgress = True
+        self.__unPack()
+        self.__puzzleInProgress = True
 
-            # set the colours
-            for i, colour in enumerate(self.__counters):
-                if colour == self.__pOne.get():
-                    self.__pOneColour = i
-                elif colour == self.__pTwo.get():
-                    self.__pTwoColour = i
+        # set the colours
+        for i, colour in enumerate(self.__counters):
+            if colour == self.__pOne.get():
+                self.__pOneColour = i
+            elif colour == self.__pTwo.get():
+                self.__pTwoColour = i
 
-            # create the puzzle window
-            puzzleWin = Toplevel(self.__root)
-            puzzleWin.title("Puzzle")
-            puzzleWin.configure(bg='#9DE3FD')
-            self.__puzzleWin = puzzleWin
+        frameButtons = Frame(self.__root, bg='#9DE3FD')
+        frameButtons.pack()
 
-            frameButtons = Frame(puzzleWin, bg='#9DE3FD')
-            frameButtons.pack()
+        # column buttons
+        for col in range(7):
+            t = StringVar()
+            t.set(col + 1)
+            cmd = lambda c=col: self.__playPuzzleMove(c)
+            Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0, column=col, sticky=N+S+W+E)
 
-            # column buttons
-            for col in range(7):
-                t = StringVar()
-                t.set(col + 1)
-                cmd = lambda c=col: self.__playPuzzleMove(c)
-                Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0, column=col, sticky=N+S+W+E)
+        # resizing
+        for col in range(7):
+            Grid.columnconfigure(frameButtons, col, weight=1)
 
-            # resizing
-            for col in range(7):
-                Grid.columnconfigure(frameButtons, col, weight=1)
+        # board
+        # Change tile to change board size
+        winWidth = self.__root.winfo_screenwidth()
+        if winWidth < 40:
+            # min board tile size
+            winWidth = 40
+        elif winWidth > 100:
+            # max board tile size
+            winWidth = 100
 
-            # board
-            # Change tile to change board size
-            winWidth = self.__puzzleWin.winfo_screenwidth()
-            if winWidth < 40:
-                # min board tile size
-                winWidth = 40
-            elif winWidth > 100:
-                # max board tile size
-                winWidth = 100
+        tile = winWidth
+        counterSize = tile * 0.8
+        boardWidth = 7 * tile
+        boardHeight = 6 * tile
+        board = Canvas(frameButtons, width=boardWidth, height=boardHeight, bg='blue')
+        baseX1 = tile / 10
+        baseY1 = tile / 10
+        baseX2 = baseX1 + counterSize
+        baseY2 = baseY1 + counterSize
+        self.__spaces = [[None for _ in range(7)] for _ in range(6)]
+        for row in range(6):
+            for column in range(7):
+                # create counter slots
+                space = self.__game.getSpace(row, column)
+                if space == game.PONE:
+                    counterColour = self.__colours[self.__pOneColour]
+                elif space == game.PTWO:
+                    counterColour = self.__colours[self.__pTwoColour]
+                else:
+                    counterColour = "white"
+                if self.__shape.get() == 'SQUARE':
+                    shape = board.create_rectangle(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)
+                elif self.__shape.get() == 'TRIANGLE':
+                    shape = board.create_polygon(baseX1 + counterSize / 2 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), baseX2 - counterSize + (column * tile), baseY2 + (row * tile), fill=counterColour)
+                else:
+                    shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
+                self.__spaces[row][column] = shape
+        board.grid(row=1, columnspan=7)
+        self.__canvas = board
 
-            tile = winWidth
-            counterSize = tile * 0.8
-            boardWidth = 7 * tile
-            boardHeight = 6 * tile
-            board = Canvas(frameButtons, width=boardWidth, height=boardHeight, bg='blue')
-            baseX1 = tile / 10
-            baseY1 = tile / 10
-            baseX2 = baseX1 + counterSize
-            baseY2 = baseY1 + counterSize
-            self.__spaces = [[None for _ in range(7)] for _ in range(6)]
-            for row in range(6):
-                for column in range(7):
-                    # create counter slots
-                    space = self.__game.getSpace(row, column)
-                    if space == game.PONE:
-                        counterColour = self.__colours[self.__pOneColour]
-                    elif space == game.PTWO:
-                        counterColour = self.__colours[self.__pTwoColour]
-                    else:
-                        counterColour = "white"
-                    if self.__shape.get() == 'SQUARE':
-                        shape = board.create_rectangle(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)
-                    elif self.__shape.get() == 'TRIANGLE':
-                        shape = board.create_polygon(baseX1 + counterSize / 2 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), baseX2 - counterSize + (column * tile), baseY2 + (row * tile), fill=counterColour)
-                    else:
-                        shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
-                    self.__spaces[row][column] = shape
-            board.grid(row=1, columnspan=7)
-            self.__canvas = board
+        frameMenu = Frame(self.__root, bg='#9DE3FD')
+        frameMenu.pack()
 
-            frameMenu = Frame(puzzleWin, bg='#9DE3FD')
-            frameMenu.pack()
+        self.__puzzleID = StringVar()
+        self.__puzzleID.set("Set Puzzle ID")
 
-            self.__puzzleID = StringVar()
-            self.__puzzleID.set("Set Puzzle ID")
+        # instruction label
+        if create:
+            t = "PUT IN SOME COUNTERS, ENTER A PUZZLE ID THEN SAVE"
+        else:
+            player = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[
+                self.__pTwoColour]
+            t = f"PLAY THE BEST MOVE POSSIBLE FOR {player}"
+        Label(frameMenu, text=t, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N + S + E + W)
 
-            # instruction label
-            if create:
-                t = "PUT IN SOME COUNTERS, ENTER A PUZZLE ID THEN SAVE"
-            else:
-                player = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[
-                    self.__pTwoColour]
-                t = f"PLAY THE BEST MOVE POSSIBLE FOR {player}"
-            Label(frameMenu, text=t, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N + S + E + W)
+        if create:
+            self.__creative = True
+            # puzzle id entry
+            Entry(frameMenu, textvariable=self.__puzzleID).grid(row=0, column=1, sticky=N + S + W + E)
+            # save button
+            Button(frameMenu, text="Save", command=self._savePuzzle, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N + S + W + E)
+        else:
+            self.__creative = False
+            # puzzle id label
+            Label(frameMenu, text=f"ID: {self.__loadPuzzleID}", font='{Copperplate Gothic Light} 14', bg='grey').grid(row=0, column=1, sticky=N + S + W + E)
+            # solve button
+            Button(frameMenu, text="Solve", command=self._solvePuzzle, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N + S + W + E)
+        # undo button
+        Button(frameMenu, text="Undo", command=self._undoMove, font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=N + S + W + E)
 
-            if create:
-                self.__creative = True
-                # puzzle id entry
-                Entry(frameMenu, textvariable=self.__puzzleID).grid(row=0, column=1, sticky=N + S + W + E)
-                # save button
-                Button(frameMenu, text="Save", command=self._savePuzzle, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N + S + W + E)
-            else:
-                self.__creative = False
-                # puzzle id label
-                Label(frameMenu, text=f"ID: {self.__puzzleCode}", font='{Copperplate Gothic Light} 14', bg='grey').grid(row=0, column=1, sticky=N + S + W + E)
-                # solve button
-                Button(frameMenu, text="Solve", command=self._solvePuzzle, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N + S + W + E)
-            # undo button
-            Button(frameMenu, text="Undo", command=self._undoMove, font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=N + S + W + E)
+        frameBottom = Frame(self.__root, bg='#9DE3FD')
+        frameBottom.pack(fill=X)
 
-            frameBottom = Frame(puzzleWin, bg='#9DE3FD')
-            frameBottom.pack(fill=X)
+        # exit button
+        Button(frameBottom, text="Exit", command=self._exitPuzzle, font='{Copperplate Gothic Light} 14').pack()
 
-            # exit button
-            Button(frameBottom, text="Exit", command=self._exitPuzzle, font='{Copperplate Gothic Light} 14').pack()
+        # console
+        console = Listbox(frameBottom, height=3)
+        console.pack(fill=X)
+        self.__gameConsole = console
 
-            # console
-            console = Listbox(frameBottom, height=3)
-            console.pack(fill=X)
-            self.__gameConsole = console
+        self._puzzleOver = False
+        self.__quitFrame.pack()
 
-            self._puzzleOver = False
+        self.__pgButtons = frameButtons
+        self.__pgMenu = frameMenu
+        self.__pgBottom = frameBottom
+        self.__toUnpack.append(self.__pgButtons)
+        self.__toUnpack.append(self.__pgMenu)
+        self.__toUnpack.append(self.__pgBottom)
 
     def __playPuzzleMove(self, col):
         # if a counter is falling print a wait message
@@ -633,8 +634,14 @@ class gui(ui):
                 self._puzzleOver = True
 
     def _exitPuzzle(self):
-        self.__puzzleWin.destroy()
         self.__puzzleInProgress = False
+        self.__unPack()
+        self.__gameTypeFrame.pack()
+        self.__toUnpack.append(self.__gameTypeFrame)
+        self.__quitFrame.pack()
+        del self.__pgButtons
+        del self.__pgMenu
+        del self.__pgBottom
 
     def _dismissPuzzleSetup(self):
         self.__unPack()
@@ -765,10 +772,9 @@ class gui(ui):
             self.__opponent = None
 
             frameUpper = Frame(self.__root)
-            frameUpper.pack(fill=X)
+            frameUpper.pack()
 
-            Label(frameUpper, text=f"Play", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(
-                fill=X)
+            Label(frameUpper, text=f"Play", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
 
             # first player
             self.__firstTurn = StringVar()
@@ -779,7 +785,7 @@ class gui(ui):
                 firstTurnDropDown.pack(fill=X)
 
             frameMiddle = Frame(self.__root, bg='#9DE3FD')
-            frameMiddle.pack(fill=X)
+            frameMiddle.pack()
 
             # opponent
             Label(frameMiddle, text="Choose Opponent:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=W)
@@ -791,11 +797,9 @@ class gui(ui):
 
             # colour choices
             playerOne = "Player 1" if self.__guest else f"{self.__username.get()}"
-            Label(frameMiddle, text=f"{playerOne} colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(
-                row=1, column=0, sticky=W)
+            Label(frameMiddle, text=f"{playerOne} colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=W)
             playerTwo = "Player 2" if self.__guest else f"Opponent"
-            Label(frameMiddle, text=f"{playerTwo} colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(
-                row=2, column=0, sticky=W)
+            Label(frameMiddle, text=f"{playerTwo} colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=2, column=0, sticky=W)
             self.__pOne = StringVar()
             self.__pOne.set("RED")
             self.__pTwo = StringVar()
@@ -817,7 +821,7 @@ class gui(ui):
             shapeDropDown.grid(row=3, column=1, sticky=W)
 
             frameLower = Frame(self.__root)
-            frameLower.pack(fill=X)
+            frameLower.pack()
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
 
             # play button
@@ -934,135 +938,121 @@ class gui(ui):
         self.__toUnpack.append(self.__helpFrame)
 
     def _play(self):
-        # print(self.__opponentType.get())
-        if not self.__gameInProgress:
-            if self.__setupCreated:
-                self._dismissSetup()
-            else:
-                self.__game = game()
-            # if the opponent is not human, create an AI object
-            if self.__opponentType.get() != "Human":
-                self.__opponent = Ai(self.__opponentType.get())
-            self.__gameInProgress = True
+        self.__unPack()
+        if not self.__setupCreated:
+            self.__game = game()
+        # if the opponent is not human, create an AI object
+        if self.__opponentType.get() != "Human":
+            self.__opponent = Ai(self.__opponentType.get())
+        self.__gameInProgress = True
 
-            # set the colours
-            for i, colour in enumerate(self.__counters):
-                if colour == self.__pOne.get():
-                    self.__pOneColour = i
-                elif colour == self.__pTwo.get():
-                    self.__pTwoColour = i
+        # set the colours
+        for i, colour in enumerate(self.__counters):
+            if colour == self.__pOne.get():
+                self.__pOneColour = i
+            elif colour == self.__pTwo.get():
+                self.__pTwoColour = i
 
-            # create the game window
-            gameWin = Toplevel(self.__root)
-            gameWin.title("Game")
-            gameWin.configure(bg='#9DE3FD')
-            self.__gameWin = gameWin
+        frameButtons = Frame(self.__root, bg='#9DE3FD')
+        frameButtons.pack()
+        # column buttons
+        for col in range(7):
+            t = StringVar()
+            t.set(col + 1)
+            cmd = lambda c=col: self.__playMove(c)
+            Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0, column=col, sticky=E + W)
 
-            frameButtons = Frame(gameWin, bg='#9DE3FD')
-            frameButtons.pack()
-            # column buttons
-            for col in range(7):
-                t = StringVar()
-                t.set(col + 1)
-                cmd = lambda c=col: self.__playMove(c)
-                Button(frameButtons, textvariable=t, command=cmd, font='{Copperplate Gothic Light} 14').grid(row=0, column=col, sticky=E + W)
+        # resizing
+        for col in range(7):
+            Grid.columnconfigure(frameButtons, col, weight=1)
 
-            # resizing
-            for col in range(7):
-                Grid.columnconfigure(frameButtons, col, weight=1)
+        # frameBoard = Frame(gameWin, bg='#9DE3FD')
+        # frameBoard.pack(fill=X)
+        # Board
+        # Change tile to change board size
+        winWidth = self.__root.winfo_screenwidth()
+        if winWidth < 40:
+            # min board tile size
+            winWidth = 40
+        elif winWidth > 100:
+            # max board tile size
+            winWidth = 100
+        tile = winWidth
 
-            # frameBoard = Frame(gameWin, bg='#9DE3FD')
-            # frameBoard.pack(fill=X)
-            # Board
-            # Change tile to change board size
-            winWidth = self.__gameWin.winfo_screenwidth()
-            if winWidth < 40:
-                # min board tile size
-                winWidth = 40
-            elif winWidth > 100:
-                # max board tile size
-                winWidth = 100
-            tile = winWidth
+        counterSize = tile * 0.8
+        boardWidth = 7 * tile
+        boardHeight = 6 * tile
+        board = Canvas(frameButtons, width=boardWidth, height=boardHeight, bg='blue')
+        baseX1 = tile / 10
+        baseY1 = tile / 10
+        baseX2 = baseX1 + counterSize
+        baseY2 = baseY1 + counterSize
 
-            counterSize = tile * 0.8
-            boardWidth = 7 * tile
-            boardHeight = 6 * tile
-            board = Canvas(frameButtons, width=boardWidth, height=boardHeight, bg='blue')
-            baseX1 = tile / 10
-            baseY1 = tile / 10
-            baseX2 = baseX1 + counterSize
-            baseY2 = baseY1 + counterSize
-
-            self.__spaces = [[None for _ in range(7)] for _ in range(6)]
-            for row in range(6):
-                for column in range(7):
-                    # create counter slots
-                    space = self.__game.getSpace(row, column)
-                    if space == game.PONE:
-                        counterColour = self.__colours[self.__pOneColour]
-                    elif space == game.PTWO:
-                        counterColour = self.__colours[self.__pTwoColour]
-                    else:
-                        counterColour = "white"
-                    if self.__shape.get() == 'SQUARE':
-                        shape = board.create_rectangle(baseX1 + (column * tile), baseY1 + (row * tile),
-                                                       baseX2 + (column * tile), baseY2 + (row * tile),
-                                                       fill=counterColour)
-                    elif self.__shape.get() == 'TRIANGLE':
-                        shape = board.create_polygon(baseX1 + counterSize / 2 + (column * tile), baseY1 + (row * tile),
-                                                     baseX2 + (column * tile), baseY2 + (row * tile),
-                                                     baseX2 - counterSize + (column * tile), baseY2 + (row * tile),
-                                                     fill=counterColour)
-                    else:
-                        shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile),
-                                                  baseX2 + (column * tile), baseY2 + (row * tile),
-                                                  fill=counterColour)  # , dash=(7,1,1,1)
-                    self.__spaces[row][column] = shape
-            board.grid(row=1, columnspan=7)
-            self.__canvas = board
-
-            frameMenu = Frame(gameWin, bg='#9DE3FD')
-            frameMenu.pack()
-
-            # player turn label
-            self.__playerTurn = StringVar()
-            if self.__opponentType.get() == "Human" and not self._network:
-                counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[
-                    self.__pTwoColour]
-                self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
-            elif self.__opponentType.get() == "Human" and self._network:
-                if self._clientTurn:
-                    self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
+        self.__spaces = [[None for _ in range(7)] for _ in range(6)]
+        for row in range(6):
+            for column in range(7):
+                # create counter slots
+                space = self.__game.getSpace(row, column)
+                if space == game.PONE:
+                    counterColour = self.__colours[self.__pOneColour]
+                elif space == game.PTWO:
+                    counterColour = self.__colours[self.__pTwoColour]
                 else:
-                    self.__playerTurn.set("OPPONENT'S TURN\nPLEASE WAIT")
-            else:
+                    counterColour = "white"
+                if self.__shape.get() == 'SQUARE':
+                    shape = board.create_rectangle(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)
+                elif self.__shape.get() == 'TRIANGLE':
+                    shape = board.create_polygon(baseX1 + counterSize / 2 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), baseX2 - counterSize + (column * tile), baseY2 + (row * tile), fill=counterColour)
+                else:
+                    shape = board.create_oval(baseX1 + (column * tile), baseY1 + (row * tile), baseX2 + (column * tile), baseY2 + (row * tile), fill=counterColour)  # , dash=(7,1,1,1)
+                self.__spaces[row][column] = shape
+        board.grid(row=1, columnspan=7)
+        self.__canvas = board
+
+        frameMenu = Frame(self.__root, bg='#9DE3FD')
+        frameMenu.pack()
+
+        # player turn label
+        self.__playerTurn = StringVar()
+        if self.__opponentType.get() == "Human" and not self._network:
+            counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
+            self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
+        elif self.__opponentType.get() == "Human" and self._network:
+            if self._clientTurn:
                 self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
-
-            Label(frameMenu, textvariable=self.__playerTurn, bg='gray', font='{Copperplate Gothic Light} 14').grid(
-                row=0, column=0, sticky=N + S + E + W)
-            # dismiss button
-            Button(frameMenu, text="Dismiss", command=self._dismissGame, font='{Copperplate Gothic Light} 14').grid(
-                row=1, column=0, sticky=N + S + E + W)
-
-            if not self._network:
-                # undo button
-                Button(frameMenu, text="Undo", command=self._undoMove, font='{Copperplate Gothic Light} 14').grid(row=0,
-                                                                                                                  column=1,
-                                                                                                                  sticky=N + S + E + W)
-                # save and exit button
-                Button(frameMenu, text="Save and Exit", command=self._saveAndExit,
-                       font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N + S + E + W)
-
-            frameConsole = Frame(gameWin, bg='#9DE3FD')
-            frameConsole.pack(fill=X)
-            # console
-            console = Listbox(frameConsole, height=3)
-            console.pack(fill=X)
-            self.__gameConsole = console
-            if self._network:
-                self.__gameConsole.insert(END, f"1| local game (this is {self.__username.get()})")
             else:
-                self.__gameConsole.insert(END, f"1| game against {self.__opponentType.get()}")
+                self.__playerTurn.set("OPPONENT'S TURN\nPLEASE WAIT")
+        else:
+            self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
+
+        Label(frameMenu, textvariable=self.__playerTurn, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N + S + E + W)
+        # dismiss button
+        Button(frameMenu, text="Dismiss", command=self._dismissGame, font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=N + S + E + W)
+
+        if not self._network:
+            # undo button
+            Button(frameMenu, text="Undo", command=self._undoMove, font='{Copperplate Gothic Light} 14').grid(row=0, column=1, sticky=N + S + E + W)
+            # save and exit button
+            Button(frameMenu, text="Save and Exit", command=self._saveAndExit, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N + S + E + W)
+
+        frameConsole = Frame(self.__root, bg='#9DE3FD')
+        frameConsole.pack(fill=X)
+        # console
+        console = Listbox(frameConsole, height=3)
+        console.pack(fill=X)
+        self.__gameConsole = console
+        if self._network:
+            self.__gameConsole.insert(END, f"1| local game (this is {self.__username.get()})")
+        else:
+            self.__gameConsole.insert(END, f"1| game against {self.__opponentType.get()}")
+
+        self.__quitFrame.pack()
+        self.__ggButtons = frameButtons
+        self.__ggMenu = frameMenu
+        self.__ggConsole = frameConsole
+        self.__toUnpack.append(self.__ggButtons)
+        self.__toUnpack.append(self.__ggMenu)
+        self.__toUnpack.append(self.__ggConsole)
 
     def _saveAndExit(self):
         # if a counter is falling print a wait message
@@ -1070,41 +1060,44 @@ class gui(ui):
             self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
             if self.__gameConsole.size() > 3:
                 self.__gameConsole.yview_scroll(1, UNITS)
-        elif not self.__saveInProgress:
-            self.__saveInProgress = True
-            saveWin = Toplevel(self.__root)
-            saveWin.title("Save and Exit")
-            saveWin.configure(bg='#9DE3FD')
-            frame = Frame(saveWin)
-            frame.pack()
-            self.__saveWin = saveWin
+        else:
+            self.__unPack()
+            if not self.__saveCreated:
+                self.__saveCreated = True
+                frame = Frame(self.__root)
+                frame.pack()
 
-            self.__gameName = StringVar()
-            self.__gameName.set("Enter Game Name")
+                self.__gameName = StringVar()
+                self.__gameName.set("Enter Game Name")
 
-            Label(frame, text=f"Save", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
-            # instruction
-            Label(frame, text=f"ENTER GAME NAME BELOW", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').pack(fill=X)
-            # text entry
-            Entry(frame, textvariable=self.__gameName).pack(fill=X)
-            # save button
-            Button(frame, text="Save", command=self._saveGame, font='{Copperplate Gothic Light} 14').pack(fill=X)
-            # cancel button
-            Label(frame, text="", bg='#9DE3FD').pack(fill=X)
-            Button(frame, text="Cancel", command=self._cancelSave, font='{Copperplate Gothic Light} 14').pack(fill=X)
-            Label(frame, text="", bg='#9DE3FD').pack(fill=X)
-            # console
-            console = Listbox(frame, height=3)
-            console.pack(fill=X)
-            self.__saveConsole = console
-            # self.__saveConsole.insert(END, f"1| ")
+                Label(frame, text=f"Save", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
+                # instruction
+                Label(frame, text=f"ENTER GAME NAME BELOW", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').pack(fill=X)
+                # text entry
+                Entry(frame, textvariable=self.__gameName).pack(fill=X)
+                # save button
+                Button(frame, text="Save", command=self._saveGame, font='{Copperplate Gothic Light} 14').pack(fill=X)
+                # cancel button
+                Label(frame, text="", bg='#9DE3FD').pack(fill=X)
+                Button(frame, text="Cancel", command=self._cancelSave, font='{Copperplate Gothic Light} 14').pack(fill=X)
+                Label(frame, text="", bg='#9DE3FD').pack(fill=X)
+                # console
+                console = Listbox(frame, height=3)
+                console.pack(fill=X)
+                self.__saveConsole = console
+                # self.__saveConsole.insert(END, f"1| ")
+
+                self.__saveAndExitFrame = frame
+            else:
+                self.__saveAndExitFrame.pack()
+            self.__quitFrame.pack()
+            self.__toUnpack.append(self.__saveAndExitFrame)
 
     def _saveGame(self):
         username = "guest" if self.__guest else self.__username.get()
         # try to save
         try:
             self.__game.save(self.__gameName.get(), self.__opponentType.get(), username)
-            self._cancelSave()
             self._dismissGame()
         # if the name is not unique, print an error message
         except IntegrityError:
@@ -1113,8 +1106,14 @@ class gui(ui):
                 self.__saveConsole.yview_scroll(1, UNITS)
 
     def _cancelSave(self):
-        self.__saveWin.destroy()
-        self.__saveInProgress = False
+        self.__unPack()
+        self.__ggButtons.pack()
+        self.__ggMenu.pack()
+        self.__ggConsole.pack()
+        self.__toUnpack.append(self.__ggButtons)
+        self.__toUnpack.append(self.__ggMenu)
+        self.__toUnpack.append(self.__ggConsole)
+        self.__quitFrame.pack()
 
     def _undoMove(self):
         if not self.__gameOver and self.__opponentType.get() == "Human":
@@ -1260,7 +1259,10 @@ class gui(ui):
         self.__animating = False
 
     def _dismissGame(self):
-        self.__gameWin.destroy()
+        self.__unPack()
+        self.__gameTypeFrame.pack()
+        self.__toUnpack.append(self.__gameTypeFrame)
+        self.__quitFrame.pack()
         self.__gameOver = False
         self.__gameInProgress = False
 
