@@ -16,19 +16,19 @@ class Ai:
         self.__aiCounter = counter
         self.__playerCounter = game.PONE if counter != game.PONE else game.PTWO
         if self.__difficulty == "Practice AI":
-            move = self.practiceAI(board)
+            move = self.__practiceAI(board)
         elif self.__difficulty == "Easy AI":
-            move = self.easyAI(board, counter)
+            move = self.__easyAI(board, counter)
         elif self.__difficulty == "Medium AI":
-            move = self.mediumAI(board)
+            move = self.__mediumAI(board)
         elif self.__difficulty == "Hard AI":
-            move = self.hardAI(board, counter)
+            move = self.__hardAI(board, counter)
 
         # return the ai's move
         return move
 
     @staticmethod
-    def practiceAI(board):
+    def __practiceAI(board):
         col = -1
         while col == -1:
             # play random column
@@ -37,7 +37,7 @@ class Ai:
                 col = move
         return col
 
-    def easyAI(self, board, counter):
+    def __easyAI(self, board, counter):
         scores = [0, 0, 0, 0, 0, 0, 0]
         for column in range(7):
             # print(f"column {column + 1}:")
@@ -168,12 +168,12 @@ class Ai:
             if move in maxIndex:
                 return move
 
-    def mediumAI(self, board):
-        boards = self.nextBoards(board, self.__aiCounter)
+    def __mediumAI(self, board):
+        boards = self.__nextBoards(board, self.__aiCounter)
         boardList = []
         moves = []
         for key in boards.keys():
-            boardList.append((key, boards[key], self.medMiniMax(3, boards[key], False)))
+            boardList.append((key, boards[key], self.__medMiniMax(3, boards[key], False)))
         value = -9999999
         for newBoard in boardList:
             if newBoard[2] > value:
@@ -185,13 +185,13 @@ class Ai:
             if move in moves:
                 return move
 
-    def hardAI(self, board, counter):
+    def __hardAI(self, board, counter):
         # include trapping, traps can be detected be detected by checking if there all the children node are 1 (winning trap) or all the children nodes are -1 (losing trap)
-        boards = self.nextBoards(board, self.__aiCounter)
+        boards = self.__nextBoards(board, self.__aiCounter)
         boardList = []
         moves = []
         for key in boards.keys():
-            boardList.append((key, boards[key], self.hardMiniMax(5, boards[key], False)))
+            boardList.append((key, boards[key], self.__hardMiniMax(5, boards[key], False)))
         value = -9999999
         for newBoard in boardList:
             if newBoard[2] > value:
@@ -200,13 +200,13 @@ class Ai:
             elif newBoard[2] == value:
                 moves.append(newBoard[2])
         if len(moves) == 7:
-            return self.easyAI(board, counter)
+            return self.__easyAI(board, counter)
         for move in self.__priorList:
             if move in moves:
                 return move
 
-    def medMiniMax(self, depth, board, aiTurn):
-        end = self.checkTerminal(board)
+    def __medMiniMax(self, depth, board, aiTurn):
+        end = self.__checkTerminal(board)
         if depth == 0 or end is not None:
             if end == self.__aiCounter:
                 return 1 + depth
@@ -216,24 +216,24 @@ class Ai:
                 return 0
         if aiTurn:
             value = -9999999
-            newBoards = self.nextBoards(board, self.__aiCounter)
+            newBoards = self.__nextBoards(board, self.__aiCounter)
             for newBoard in newBoards.values():
-                newVal = self.medMiniMax(depth-1, newBoard, False)
+                newVal = self.__medMiniMax(depth - 1, newBoard, False)
                 if newVal > value:
                     value = newVal
             return value
         else:
             value = 9999999
-            newBoards = self.nextBoards(board, self.__playerCounter)
+            newBoards = self.__nextBoards(board, self.__playerCounter)
             for newBoard in newBoards.values():
-                newVal = self.medMiniMax(depth - 1, newBoard, True)
+                newVal = self.__medMiniMax(depth - 1, newBoard, True)
                 if newVal < value:
                     value = newVal
             return value
 
-    def hardMiniMax(self, depth, board, aiTurn):
+    def __hardMiniMax(self, depth, board, aiTurn):
         depthValues = dd(lambda: 0)
-        end = self.checkTerminal(board)
+        end = self.__checkTerminal(board)
         if depth == 0 or end is not None:
             if end == self.__aiCounter:
                 return 1 + depth
@@ -243,29 +243,29 @@ class Ai:
                 return 0
         if aiTurn:
             value = -9999999
-            newBoards = self.nextBoards(board, self.__aiCounter)
+            newBoards = self.__nextBoards(board, self.__aiCounter)
             for newBoard in newBoards.values():
-                newVal = self.hardMiniMax(depth-1, newBoard, False)
+                newVal = self.__hardMiniMax(depth - 1, newBoard, False)
                 depthValues[newVal] += 1
                 if newVal > value:
                     value = newVal
             if len(depthValues) == 1:
-                value = 2 * value
+                value += 0.1
             return value
         else:
             value = 9999999
-            newBoards = self.nextBoards(board, self.__playerCounter)
+            newBoards = self.__nextBoards(board, self.__playerCounter)
             for newBoard in newBoards.values():
-                newVal = self.hardMiniMax(depth - 1, newBoard, True)
+                newVal = self.__hardMiniMax(depth - 1, newBoard, True)
                 depthValues[newVal] += 1
                 if newVal < value:
                     value = newVal
             if len(depthValues) == 1:
-                value = 2 * value
+                value -= 0.1
             return value
 
     @staticmethod
-    def nextBoards(board, counter):
+    def __nextBoards(board, counter):
         boards = {}
         for iC, column in enumerate(board[0]):
             if column == " ":
@@ -276,7 +276,7 @@ class Ai:
         return boards
 
     @staticmethod
-    def checkTerminal(board):
+    def __checkTerminal(board):
         # check horizontal
         player = " "
         counters = []

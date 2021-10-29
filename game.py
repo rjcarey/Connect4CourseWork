@@ -20,9 +20,9 @@ class game:
         # store the board
         self.Board = [[game.EMPTY for _ in range(7)] for _ in range(6)]
         # and whose turn it is
-        self._Player = game.PONE
+        self.__Player = game.PONE
         # and the moves that are played in order
-        self._Played = []
+        self.__Played = []
 
     def __repr__(self):
         # create a board display to be called when the object is printed
@@ -41,7 +41,7 @@ class game:
     @property
     def getPlayer(self):
         # return whose turn it is
-        return self._Player
+        return self.__Player
 
     @property
     def getRun(self):
@@ -125,25 +125,25 @@ class game:
             # for each slot in the column (from bottom to top) if the slot is empty, place a counter there
             if row[col] == game.EMPTY:
                 # set the space to the counter
-                row[col] = self._Player
+                row[col] = self.__Player
                 playedRow = i
                 # add the coordinates to the list of played moves
-                self._Played.append((5 - playedRow, col))
+                self.__Played.append((5 - playedRow, col))
                 break
         # flip the turn
-        self._Player = game.PTWO if self._Player == game.PONE else game.PONE
+        self.__Player = game.PTWO if self.__Player == game.PONE else game.PONE
         # return which row was played in
         return playedRow
 
     def undo(self):
         # if at least one move has been played
-        if self._Played:
+        if self.__Played:
             # get the coordinates of the last move
-            lastRow, lastCol = self._Played.pop()
+            lastRow, lastCol = self.__Played.pop()
             # set the slot to be empty
             self.Board[lastRow][lastCol] = game.EMPTY
             # flip the turn
-            self._Player = game.PTWO if self._Player == game.PONE else game.PONE
+            self.__Player = game.PTWO if self.__Player == game.PONE else game.PONE
             # return the coordinates of the last move
             return lastRow, lastCol
         else:
@@ -156,7 +156,7 @@ class game:
 
         # get a string of the moves
         moves = ""
-        for move in self._Played:
+        for move in self.__Played:
             moves += str(move[1])
 
         # add game to database
@@ -208,7 +208,7 @@ class game:
                 self.play(int(move)+1)
             connection.close()
             # reset the played moves
-            self._Played = []
+            self.__Played = []
             # return the solution move and the id of the puzzle
             return solution, ID
         else:
@@ -222,12 +222,12 @@ class game:
 
         # get a string of the moves
         moves = ""
-        for move in self._Played:
+        for move in self.__Played:
             moves += str(move[1])
 
         # add game to database
-        sql = f"""INSERT INTO PUZZLES (ID,MOVES,SOLUTION)
-                      VALUES ('{ID}', '{moves}', '{solution}')"""
+        sql = f"""INSERT INTO PUZZLES (ID,MOVES,SOLUTION) 
+                    VALUES ('{ID}', '{moves}', '{solution}')"""
         connection.execute(sql)
         connection.commit()
 
@@ -240,4 +240,4 @@ class game:
 
     def loadAI(self, board, counter):
         self.Board = board
-        self._Player = counter
+        self.__Player = counter
