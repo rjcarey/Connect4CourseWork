@@ -1304,7 +1304,10 @@ class gui(ui):
         self.__running = False
 
     async def runClient(self):
-        await self.__client.run()
+        try:
+            await self.__client.run()
+        except ConnectionRefusedError:
+            print("server offline...")
 
     async def run(self):
         # simulate mainloop so that the gui and client can both run
@@ -1402,7 +1405,11 @@ class terminal(ui):
         self._clientTurn = True
 
     async def runClient(self):
-        await self._client.run()
+        try:
+            await self._client.run()
+        except ConnectionRefusedError:
+            print("server offline...")
+            quit()
 
     async def run(self):
         if self._network:
