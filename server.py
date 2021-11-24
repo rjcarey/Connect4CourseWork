@@ -2,6 +2,7 @@ from asyncio import Queue, create_task, wait, FIRST_COMPLETED, get_event_loop
 from websockets import serve
 from json import dumps
 from configs import serverIP, serverPort
+import sqlite3
 
 
 class server:
@@ -30,6 +31,19 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'hnf'}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
+            elif dictionary.get('cmd', None) == 'logIn':
+                username = dictionary.get('from', None)
+                connection = sqlite3.connect('connectFour.db')
+                # verify account details
+                sql = f"SELECT * from ACCOUNTS WHERE USERNAME == '{username}'"
+                accountInfo = connection.execute(sql)
+                accountInfoRow = None
+                for row in accountInfo:
+                    accountInfoRow = row
+                connection.close()
+                msg = {'to': username, 'cmd': 'logIn', "accountInfo": accountInfoRow}
+                print(msg)
+                await self.__messageQ.put(dumps(msg))
             else:
                 await self.__messageQ.put(message)
 

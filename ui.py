@@ -55,9 +55,9 @@ class gui(ui):
         self.__animating = False
         self.__menuFrameCreated = False
         self.__createAccountFrame = False
-        self.__statsCreated = False
         self.__localGame = False
         self.__hostCreated = False
+        self.__waitingForLogin = False
 
         self.__opponent = None
         self.__opponentType = StringVar(value="Human")
@@ -101,37 +101,9 @@ class gui(ui):
         self.__quitFrame.pack_forget()
 
     def __logIn(self):
-        try:
-            connection = sqlite3.connect('connectFour.db')
-            # verify account details
-            sql = f"SELECT * from ACCOUNTS WHERE USERNAME == '{self.__username.get()}'"
-            accountInfo = connection.execute(sql)
-            username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = None, None, None, 0, 0, 0, 0, 0, 0
-            for row in accountInfo:
-                username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = row
-            if username:
-                salt = key.to_bytes(4, byteorder="big")
-                password = pbkdf2_hmac('sha256', self.__password.get().encode('utf-8'), salt, 100000)
-                if str(password) == str(hashedPassword):
-                    # if details are verified, keep record of account name and open menu
-                    self.__password.set("")
-                    self.__guest = False
-                    self.__menu()
-                    connection.close()
-                else:
-                    # if not then print error message to log in window
-                    self.__password.set("")
-                    self.__username.set("")
-                    connection.close()
-                    raise accountError
-            else:
-                raise accountError
-        except accountError:
-            # print error message to console
-            self.__logInConsole.insert(END, f"{self.__logInConsole.size() + 1}| username or password incorrect...")
-            # scroll console if needed
-            if self.__logInConsole.size() > 3:
-                self.__logInConsole.yview_scroll(1, UNITS)
+            message = {"from": self.__username.get(), "cmd": "logIn", "pword": self.__password.get()}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForLogin = True
 
     def __createAccount(self):
         self.__unPack()
@@ -178,8 +150,7 @@ class gui(ui):
             # try to add the account to the database
             connection = sqlite3.connect('connectFour.db')
             try:
-                sql = f"""INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE)
-                              VALUES ("{self.__uName.get()}", "{key}", "{hashedPassword}", 0, 0, 0, 0, 0, 0)"""
+                sql = f"""INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE) VALUES ("{self.__uName.get()}", "{key}", "{hashedPassword}", 0, 0, 0, 0, 0, 0)"""
                 connection.execute(sql)
                 connection.commit()
                 # close connection
@@ -195,13 +166,11 @@ class gui(ui):
                 # close connection
                 connection.close()
                 # print error message
-                self.__createAccountConsole.insert(END,
-                                                   f"{self.__createAccountConsole.size() + 1}| username taken, try again...")
+                self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| username taken, try again...")
                 if self.__createAccountConsole.size() > 3:
                     self.__createAccountConsole.yview_scroll(1, UNITS)
         else:
-            self.__createAccountConsole.insert(END,
-                                               f"{self.__createAccountConsole.size() + 1}| passwords don't match, try again...")
+            self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| passwords don't match, try again...")
             if self.__createAccountConsole.size() > 3:
                 self.__createAccountConsole.yview_scroll(1, UNITS)
 
@@ -238,26 +207,21 @@ class gui(ui):
     def __stats(self):
         if not self.__guest:
             self.__unPack()
-            if not self.__statsCreated:
-                self.__statsCreated = True
-                frame = Frame(self.__root)
-                frame.pack()
+            frame = Frame(self.__root)
+            frame.pack()
 
-                # stats (played, lost, won, drawn, puzzles finished, puzzles made)
-                Label(frame, text=f"{self.__username.get()}'s stats:", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30').pack(fill=X)
-                Label(frame, text=f"PLAYED: {self.__statsPlayed}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-                Label(frame, text=f"WON: {self.__statsWon}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-                Label(frame, text=f"LOST: {self.__statsLost}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-                Label(frame, text=f"DRAWN: {self.__statsDrawn}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-                Label(frame, text=f"PUZZLE WINS: {self.__statsPFin}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-                Label(frame, text=f"PUZZLES MADE: {self.__statsPMade}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
-                # back button
-                Button(frame, text="Dismiss", command=self.__dismissStats, font='{Copperplate Gothic Light} 14').pack(fill=X)
+            # stats (played, lost, won, drawn, puzzles finished, puzzles made)
+            Label(frame, text=f"{self.__username.get()}'s stats:", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30').pack(fill=X)
+            Label(frame, text=f"PLAYED: {self.__statsPlayed}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
+            Label(frame, text=f"WON: {self.__statsWon}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
+            Label(frame, text=f"LOST: {self.__statsLost}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
+            Label(frame, text=f"DRAWN: {self.__statsDrawn}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
+            Label(frame, text=f"PUZZLE WINS: {self.__statsPFin}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
+            Label(frame, text=f"PUZZLES MADE: {self.__statsPMade}", bg='#9DE3FD', font='{Copperplate Gothic Light} 12').pack(fill=X)
+            # back button
+            Button(frame, text="Dismiss", command=self.__dismissStats, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
-                self.__statsFrame = frame
-            else:
-                self.__statsFrame.pack()
-
+            self.__statsFrame = frame
             self.__quitFrame.pack()
             self.__toUnpack.append(self.__statsFrame)
 
@@ -1022,10 +986,10 @@ class gui(ui):
 
         # player turn label
         self.__playerTurn = StringVar()
-        if self.__opponentType.get() == "Human" and not self.__network:
+        if self.__opponentType.get() == "Human" and not self.__localGame:
             counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
             self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
-        elif self.__opponentType.get() == "Human" and self.__network:
+        elif self.__opponentType.get() == "Human" and self.__localGame:
             if self.__clientTurn:
                 self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
             else:
@@ -1049,7 +1013,7 @@ class gui(ui):
         console = Listbox(frameConsole, height=3, width=100)
         console.pack()
         self.__gameConsole = console
-        if self.__network:
+        if self.__localGame:
             self.__gameConsole.insert(END, f"1| local game (this is {self.__username.get()})")
         else:
             self.__gameConsole.insert(END, f"1| game against {self.__opponentType.get()}")
@@ -1168,18 +1132,18 @@ class gui(ui):
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # if playing a networked game send the move to the opponent
-                if self.__network and self.__clientTurn:
+                if self.__localGame and self.__clientTurn:
                     message = {"to": self.__opponent, "from": self.__clientCode, "cmd": "move", "col": col}
                     get_event_loop().create_task(self.__client.send(message))
                 # animate the counter
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
                 # change turn display
-                if self.__opponentType.get() == "Human" and not self.__network:
+                if self.__opponentType.get() == "Human" and not self.__localGame:
                     # if its pass and play, use the counter colour to say whose turn it is
                     counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
-                elif self.__opponentType.get() == "Human" and self.__network:
+                elif self.__opponentType.get() == "Human" and self.__localGame:
                     # if it is a networked game, flip whose turn
                     self.__clientTurn = True if not self.__clientTurn else False
                     if self.__clientTurn:
@@ -1274,10 +1238,10 @@ class gui(ui):
         for iRow in range(row):
             self.__canvas.itemconfig(self.__spaces[iRow][col], fill=counter)
             self.__canvas.update()
-            sleep(0.4)
+            sleep(0.2)
             self.__canvas.itemconfig(self.__spaces[iRow][col], fill="white")
             self.__canvas.update()
-            sleep(0.1)
+            sleep(0.02)
         self.__animating = False
 
     def __dismissGame(self):
@@ -1286,6 +1250,7 @@ class gui(ui):
             get_event_loop().create_task(self.__client.send(message))
             self.__waitingForMove = False
             self.__localGame = False
+            self.__clientTurn = True
         self.__unPack()
         self.__gameTypeFrame.pack()
         self.__toUnpack.append(self.__gameTypeFrame)
@@ -1392,6 +1357,46 @@ class gui(ui):
                             self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| opponent has quit...")
                             if self.__gameConsole.size() > 3:
                                 self.__gameConsole.yview_scroll(1, UNITS)
+
+            # wait for login reply
+            elif self.__waitingForLogin:
+                while self.__waitingForLogin:
+                    self.__root.update()
+                    await s(0.1)
+                    # non-blocking check if there is a message in the receive queue
+                    if self.__client.canRcv():
+                        message = await self.__client.recv()
+                        cmd = message.get("cmd", None)
+                        if cmd == "logIn" and message.get("to", None) == self.__username.get():
+                            try:
+                                username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = None, None, None, 0, 0, 0, 0, 0, 0
+                                username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = message.get("accountInfo", None)
+                                if username:
+                                    salt = key.to_bytes(4, byteorder="big")
+                                    password = pbkdf2_hmac('sha256', self.__password.get().encode('utf-8'), salt, 100000)
+                                    if str(password) == str(hashedPassword):
+                                        # if details are verified, keep record of account name and open menu
+                                        self.__password.set("")
+                                        self.__guest = False
+                                        self.__menu()
+                                        self.__waitingForLogin = False
+                                    else:
+                                        # if not then print error message to log in window
+                                        username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = None, None, None, 0, 0, 0, 0, 0, 0
+                                        self.__password.set("")
+                                        self.__username.set("")
+                                        self.__waitingForLogin = False
+                                        raise accountError
+                                else:
+                                    self.__waitingForLogin = False
+                                    raise accountError
+                            except accountError:
+                                # print error message to console
+                                self.__logInConsole.insert(END,
+                                                           f"{self.__logInConsole.size() + 1}| username or password incorrect...")
+                                # scroll console if needed
+                                if self.__logInConsole.size() > 3:
+                                    self.__logInConsole.yview_scroll(1, UNITS)
 
 
 class terminal(ui):
