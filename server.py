@@ -3,6 +3,9 @@ from websockets import serve
 from json import dumps
 from configs import serverIP, serverPort
 import sqlite3
+from sqlite3 import IntegrityError
+from hashlib import pbkdf2_hmac
+from os import urandom
 
 
 class server:
@@ -31,6 +34,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'hnf'}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
+
             elif dictionary.get('cmd', None) == 'logIn':
                 username = dictionary.get('from', None)
                 connection = sqlite3.connect('connectFour.db')
@@ -44,6 +48,31 @@ class server:
                 msg = {'to': username, 'cmd': 'logIn', "accountInfo": accountInfoRow}
                 print(msg)
                 await self.__messageQ.put(dumps(msg))
+
+            elif dictionary.get('cmd', None) == 'addAccount':
+                # get random salt
+                salt = urandom(4)
+                # get the integer value of the salt to store
+                key = int.from_bytes(salt, byteorder="big")
+                # get hashed password
+                hashedPassword = pbkdf2_hmac('sha256', dictionary.get('pword', None).encode('utf-8'), salt, 100000)
+                connection = sqlite3.connect('connectFour.db')
+                try:
+                    # try to add the account to the database
+                    sql = f"""INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE) VALUES ("{dictionary.get('from', None)}", "{key}", "{hashedPassword}", 0, 0, 0, 0, 0, 0)"""
+                    connection.execute(sql)
+                    connection.commit()
+                    # close connection
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": True}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+                except IntegrityError:
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": False}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+
             else:
                 await self.__messageQ.put(message)
 

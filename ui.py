@@ -12,7 +12,6 @@ from asyncio import get_event_loop
 from sqlite3 import IntegrityError
 import sqlite3
 from hashlib import pbkdf2_hmac
-from os import urandom
 
 
 class accountError(Exception):
@@ -58,6 +57,7 @@ class gui(ui):
         self.__localGame = False
         self.__hostCreated = False
         self.__waitingForLogin = False
+        self.__waitingForAddAccount = False
 
         self.__opponent = None
         self.__opponentType = StringVar(value="Human")
@@ -101,9 +101,9 @@ class gui(ui):
         self.__quitFrame.pack_forget()
 
     def __logIn(self):
-            message = {"from": self.__username.get(), "cmd": "logIn", "pword": self.__password.get()}
-            get_event_loop().create_task(self.__client.send(message))
-            self.__waitingForLogin = True
+        message = {"from": self.__username.get(), "cmd": "logIn", "pword": self.__password.get()}
+        get_event_loop().create_task(self.__client.send(message))
+        self.__waitingForLogin = True
 
     def __createAccount(self):
         self.__unPack()
@@ -141,34 +141,9 @@ class gui(ui):
 
     def __addAccount(self):
         if self.__pWord.get() == self.__confPWord.get():
-            # get random salt
-            salt = urandom(4)
-            # get the integer value of the salt to store
-            key = int.from_bytes(salt, byteorder="big")
-            # get hashed password
-            hashedPassword = pbkdf2_hmac('sha256', self.__pWord.get().encode('utf-8'), salt, 100000)
-            # try to add the account to the database
-            connection = sqlite3.connect('connectFour.db')
-            try:
-                sql = f"""INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE) VALUES ("{self.__uName.get()}", "{key}", "{hashedPassword}", 0, 0, 0, 0, 0, 0)"""
-                connection.execute(sql)
-                connection.commit()
-                # close connection
-                connection.close()
-                # close account creation window
-                self.__cancelCreate()
-                # print message to log in console
-                self.__logInConsole.insert(END, f"{self.__logInConsole.size() + 1}| account created...")
-                # scroll console if needed
-                if self.__logInConsole.size() > 3:
-                    self.__logInConsole.yview_scroll(1, UNITS)
-            except IntegrityError:
-                # close connection
-                connection.close()
-                # print error message
-                self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| username taken, try again...")
-                if self.__createAccountConsole.size() > 3:
-                    self.__createAccountConsole.yview_scroll(1, UNITS)
+            message = {"from": self.__uName.get(), "cmd": "addAccount", "pword": self.__pWord.get()}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForAddAccount = True
         else:
             self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| passwords don't match, try again...")
             if self.__createAccountConsole.size() > 3:
@@ -518,10 +493,8 @@ class gui(ui):
         frame.pack()
         self.__solvedWin = solvedWin
 
-        Label(frame, text=f"CORRECT MOVE!", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(
-            fill=X)
-        Label(frame, text="WELL DONE!", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(
-            fill=X)
+        Label(frame, text=f"CORRECT MOVE!", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
+        Label(frame, text="WELL DONE!", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(fill=X)
         Button(frame, text="Exit", command=self.__exitSolved, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
         # update stats
@@ -1392,11 +1365,36 @@ class gui(ui):
                                     raise accountError
                             except accountError:
                                 # print error message to console
-                                self.__logInConsole.insert(END,
-                                                           f"{self.__logInConsole.size() + 1}| username or password incorrect...")
+                                self.__logInConsole.insert(END, f"{self.__logInConsole.size() + 1}| username or password incorrect...")
                                 # scroll console if needed
                                 if self.__logInConsole.size() > 3:
                                     self.__logInConsole.yview_scroll(1, UNITS)
+
+            # wait for add account reply
+            elif self.__waitingForAddAccount:
+                while self.__waitingForAddAccount:
+                    self.__root.update()
+                    await s(0.1)
+                    # non-blocking check if there is a message in the receive queue
+                    if self.__client.canRcv():
+                        message = await self.__client.recv()
+                        cmd = message.get("cmd", None)
+                        if cmd == "addAccount" and message.get("to", None) == self.__uName.get():
+                            if message.get("valid", False):
+                                # close account creation window
+                                self.__cancelCreate()
+                                # print message to log in console
+                                self.__logInConsole.insert(END, f"{self.__logInConsole.size() + 1}| account created...")
+                                # scroll console if needed
+                                if self.__logInConsole.size() > 3:
+                                    self.__logInConsole.yview_scroll(1, UNITS)
+                                self.__waitingForAddAccount = False
+                            else:
+                                # print error message
+                                self.__createAccountConsole.insert(END, f"{self.__createAccountConsole.size() + 1}| username taken, try again...")
+                                if self.__createAccountConsole.size() > 3:
+                                    self.__createAccountConsole.yview_scroll(1, UNITS)
+                                self.__waitingForAddAccount = False
 
 
 class terminal(ui):
