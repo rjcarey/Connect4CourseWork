@@ -10,7 +10,6 @@ from time import localtime, time
 from asyncio import sleep as s
 from asyncio import get_event_loop
 from sqlite3 import IntegrityError
-import sqlite3
 from hashlib import pbkdf2_hmac
 
 
@@ -58,6 +57,7 @@ class gui(ui):
         self.__hostCreated = False
         self.__waitingForLogin = False
         self.__waitingForAddAccount = False
+        self.__waitingForUpdateStats = False
 
         self.__opponent = None
         self.__opponentType = StringVar(value="Human")
@@ -101,9 +101,14 @@ class gui(ui):
         self.__quitFrame.pack_forget()
 
     def __logIn(self):
-        message = {"from": self.__username.get(), "cmd": "logIn", "pword": self.__password.get()}
-        get_event_loop().create_task(self.__client.send(message))
-        self.__waitingForLogin = True
+        if self.__network:
+            message = {"from": self.__username.get(), "cmd": "logIn", "pword": self.__password.get()}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForLogin = True
+        else:
+            self.__logInConsole.insert(END, f"{self.__logInConsole.size() + 1}| server offline, play as guest...")
+            if self.__logInConsole.size() > 3:
+                self.__logInConsole.yview_scroll(1, UNITS)
 
     def __createAccount(self):
         self.__unPack()
@@ -498,13 +503,11 @@ class gui(ui):
         Button(frame, text="Exit", command=self.__exitSolved, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
         # update stats
-        if not self.__guest:
+        if not self.__guest and self.__network:
             self.__statsPFin += 1
-            connection = sqlite3.connect('connectFour.db')
-            stmt = f"UPDATE ACCOUNTS set SPFIN = {self.__statsPFin} WHERE USERNAME = '{self.__username.get()}';"
-            connection.execute(stmt)
-            connection.commit()
-            connection.close()
+            message = {"from": self.__username.get(), "cmd": "updatePFin", "pFin": self.__statsPFin}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForUpdateStats = True
 
     def __puzzleLose(self):
         loseWin = Toplevel(self.__root)
@@ -514,10 +517,8 @@ class gui(ui):
         frame.pack()
         self.__loseWin = loseWin
 
-        Label(frame, text=f"INCORRECT MOVE!", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(
-            fill=X)
-        Label(frame, text="UNDO OR EXIT", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(
-            fill=X)
+        Label(frame, text=f"INCORRECT MOVE!", bg='#9DE3FD', font='{Copperplate Gothic Bold} 30', pady=25, padx=45).pack(fill=X)
+        Label(frame, text="UNDO OR EXIT", bg='#9DE3FD', font='{Copperplate Gothic Light} 14', pady=5, padx=10).pack(fill=X)
         Button(frame, text="Exit", command=self.__exitLost, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
     def __exitLost(self):
@@ -529,23 +530,18 @@ class gui(ui):
     def __savePuzzle(self):
         # get solution
         solution = self.__solvePuzzle(saving=True)
-
         # get id
         ID = self.__puzzleID.get()
-
         # try to save
         try:
             self.__game.savePuzzle(ID, solution)
             self.__exitPuzzle()
-
             # update stats
-            self.__statsPMade += 1
-            connection = sqlite3.connect('connectFour.db')
-            stmt = f"UPDATE ACCOUNTS set SPMADE = {self.__statsPMade} WHERE USERNAME = '{self.__username.get()}';"
-            connection.execute(stmt)
-            connection.commit()
-            connection.close()
-
+            if not self.__guest and self.__network:
+                self.__statsPMade += 1
+                message = {"from": self.__username.get(), "cmd": "updatePMade", "pMade": self.__statsPMade}
+                get_event_loop().create_task(self.__client.send(message))
+                self.__waitingForUpdateStats = True
         # if the name is not unique, print an error message
         except IntegrityError:
             self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| ID taken, try again...")
@@ -1192,19 +1188,10 @@ class gui(ui):
                 else:
                     self.__statsLost += 1
 
-                connection = sqlite3.connect('connectFour.db')
-
-                stmt = f"UPDATE ACCOUNTS set SPLAYED = {self.__statsPlayed} WHERE USERNAME = '{self.__username.get()}';"
-                connection.execute(stmt)
-                stmt = f"UPDATE ACCOUNTS set SWON = {self.__statsWon} WHERE USERNAME = '{self.__username.get()}';"
-                connection.execute(stmt)
-                stmt = f"UPDATE ACCOUNTS set SLOST = {self.__statsLost} WHERE USERNAME = '{self.__username.get()}';"
-                connection.execute(stmt)
-                stmt = f"UPDATE ACCOUNTS set SDRAWN = {self.__statsDrawn} WHERE USERNAME = '{self.__username.get()}';"
-                connection.execute(stmt)
-
-                connection.commit()
-                connection.close()
+                if self.__network:
+                    message = {"from": self.__username.get(), "cmd": "updateGameStats", "played": self.__statsPlayed, "won": self.__statsWon, "lost": self.__statsLost, "drawn": self.__statsDrawn}
+                    get_event_loop().create_task(self.__client.send(message))
+                    self.__waitingForUpdateStats = True
 
     def __animatedDrop(self, row, col, counter):
         self.__animating = True
@@ -1343,8 +1330,8 @@ class gui(ui):
                         if cmd == "logIn" and message.get("to", None) == self.__username.get():
                             try:
                                 username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = None, None, None, 0, 0, 0, 0, 0, 0
-                                username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = message.get("accountInfo", None)
-                                if username:
+                                if message.get("accountInfo", None) is not None:
+                                    username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = message.get("accountInfo", None)
                                     salt = key.to_bytes(4, byteorder="big")
                                     password = pbkdf2_hmac('sha256', self.__password.get().encode('utf-8'), salt, 100000)
                                     if str(password) == str(hashedPassword):
@@ -1395,6 +1382,25 @@ class gui(ui):
                                 if self.__createAccountConsole.size() > 3:
                                     self.__createAccountConsole.yview_scroll(1, UNITS)
                                 self.__waitingForAddAccount = False
+
+            # wait for update stats response
+            elif self.__waitingForUpdateStats:
+                while self.__waitingForUpdateStats:
+                    self.__root.update()
+                    await s(0.1)
+                    # non-blocking check if there is a message in the receive queue
+                    if self.__client.canRcv():
+                        message = await self.__client.recv()
+                        cmd = message.get("cmd", None)
+                        if cmd == "updateStats" and message.get("to", None) == self.__username.get():
+                            if message.get("valid", False):
+                                self.__waitingForUpdateStats = False
+                            else:
+                                # print error message
+                                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| failed to update stats...")
+                                if self.__gameConsole.size() > 3:
+                                    self.__gameConsole.yview_scroll(1, UNITS)
+                                self.__waitingForUpdateStats = False
 
 
 class terminal(ui):

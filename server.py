@@ -3,7 +3,7 @@ from websockets import serve
 from json import dumps
 from configs import serverIP, serverPort
 import sqlite3
-from sqlite3 import IntegrityError
+from sqlite3 import IntegrityError, OperationalError
 from hashlib import pbkdf2_hmac
 from os import urandom
 
@@ -24,8 +24,10 @@ class server:
             dictionary = eval(message)
             if dictionary.get('cmd', None) == 'hHost':
                 self.__hosts.add(dictionary.get('from', None))
+
             elif dictionary.get('cmd', None) == 'cHost':
                 self.__hosts.remove(dictionary.get('from', None))
+
             elif dictionary.get('cmd', None) == 'hJoin':
                 if dictionary.get('joinCode', None) in self.__hosts:
                     self.__hosts.remove(dictionary.get('joinCode', None))
@@ -70,6 +72,61 @@ class server:
                 except IntegrityError:
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": False}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+
+            elif dictionary.get('cmd', None) == 'updatePFin':
+                connection = sqlite3.connect('connectFour.db')
+                try:
+                    stmt = f"UPDATE ACCOUNTS set SPFIN = {dictionary.get('pFin', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    connection.execute(stmt)
+                    connection.commit()
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": True}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+                except OperationalError:
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+
+            elif dictionary.get('cmd', None) == 'updatePMade':
+                connection = sqlite3.connect('connectFour.db')
+                try:
+                    stmt = f"UPDATE ACCOUNTS set SPMADE = {dictionary.get('pMade', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    connection.execute(stmt)
+                    connection.commit()
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": True}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+                except OperationalError:
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+
+            elif dictionary.get("cmd", None) == 'updateGameStats':
+                connection = sqlite3.connect('connectFour.db')
+                try:
+                    connection = sqlite3.connect('connectFour.db')
+                    stmt = f"UPDATE ACCOUNTS set SPLAYED = {dictionary.get('played', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    connection.execute(stmt)
+                    stmt = f"UPDATE ACCOUNTS set SWON = {dictionary.get('won', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    connection.execute(stmt)
+                    stmt = f"UPDATE ACCOUNTS set SLOST = {dictionary.get('lost', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    connection.execute(stmt)
+                    stmt = f"UPDATE ACCOUNTS set SDRAWN = {dictionary.get('drawn', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    connection.execute(stmt)
+                    connection.commit()
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": True}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+                except OperationalError:
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
 
