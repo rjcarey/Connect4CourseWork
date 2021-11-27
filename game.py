@@ -1,5 +1,4 @@
 import sqlite3
-from random import randint
 
 
 class gameError(Exception):
@@ -188,33 +187,12 @@ class game:
             connection.close()
             raise nameError("name invalid...")
 
-    def loadPuzzle(self, puzzleCode):
-        connection = sqlite3.connect('connectFour.db')
-        if puzzleCode == "random":
-            # get random puzzle id from the saved puzzles
-            sql = f"SELECT * from PUZZLES"
-            puzzleInfo = connection.execute(sql)
-            results = puzzleInfo.fetchall()
-            puzzleCode = results[randint(0, len(results)-1)][0]
-        # get the puzzle game info using the puzzle id
-        sql = f"SELECT ID, MOVES, SOLUTION from PUZZLES WHERE ID == '{puzzleCode}'"
-        puzzleInfo = connection.execute(sql)
-        ID, moves, solution = None, None, None
-        for row in puzzleInfo:
-            ID, moves, solution = row
-        # if the game return the move string, play the moves
-        if moves:
-            for move in moves:
-                self.play(int(move)+1)
-            connection.close()
-            # reset the played moves
-            self.__Played = []
-            # return the solution move and the id of the puzzle
-            return solution, ID
-        else:
-            # if not then there was no saved puzzle with this id so raise an error
-            connection.close()
-            raise nameError("ID invalid...")
+    def loadPuzzle(self, moves):
+        # play the stored moves
+        for move in moves:
+            self.play(int(move)+1)
+        # reset the played moves so that the game can't be undone past the save
+        self.__Played = []
 
     def savePuzzle(self, ID, solution):
         # connect to database

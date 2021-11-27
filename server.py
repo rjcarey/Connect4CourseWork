@@ -6,6 +6,7 @@ import sqlite3
 from sqlite3 import IntegrityError, OperationalError
 from hashlib import pbkdf2_hmac
 from os import urandom
+from random import randint
 
 
 class server:
@@ -128,7 +129,28 @@ class server:
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
-                    await self.__messageQ.put(dumps(msg))
+                    await self.__messageQ.put(dumps(msg))#
+
+            elif dictionary.get('cmd', None) == 'loadPuzzle':
+                username = dictionary.get('from', None)
+                puzzleCode = dictionary.get('puzzleID', None)
+                connection = sqlite3.connect('connectFour.db')
+                if puzzleCode == "random":
+                    # get random puzzle id from the saved puzzles
+                    sql = f"SELECT * from PUZZLES"
+                    puzzleInfo = connection.execute(sql)
+                    results = puzzleInfo.fetchall()
+                    puzzleCode = results[randint(0, len(results) - 1)][0]
+                # get the puzzle game info using the puzzle id
+                sql = f"SELECT ID, MOVES, SOLUTION from PUZZLES WHERE ID == '{puzzleCode}'"
+                puzzleInfo = connection.execute(sql)
+                puzzleInfoRow = None
+                for row in puzzleInfo:
+                    puzzleInfoRow = row
+                connection.close()
+                msg = {'to': username, 'cmd': 'loadPuzzle', "puzzleInfo": puzzleInfoRow}
+                print(msg)
+                await self.__messageQ.put(dumps(msg))
 
             else:
                 await self.__messageQ.put(message)

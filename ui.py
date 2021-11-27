@@ -58,6 +58,7 @@ class gui(ui):
         self.__waitingForLogin = False
         self.__waitingForAddAccount = False
         self.__waitingForUpdateStats = False
+        self.__waitingForLoadPuzzle = False
 
         self.__opponent = None
         self.__opponentType = StringVar(value="Human")
@@ -327,15 +328,17 @@ class gui(ui):
         self.__puzzleLoad()
 
     def __puzzleLoad(self):
-        try:
-            self.__puzzleSolution, self.__loadPuzzleID = self.__game.loadPuzzle(self.__puzzleCode.get())
-            self.__puzzleGame()
-        except nameError as e:
+        if self.__network:
+            message = {"from": self.__username.get(), "cmd": "loadPuzzle", "puzzleID": self.__puzzleCode.get()}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForLoadPuzzle = True
+        else:
             # print error message to console
-            self.__puzzleSetupConsole.insert(END, f"{self.__puzzleSetupConsole.size() + 1}| {e}")
+            self.__puzzleSetupConsole.insert(END, f"{self.__puzzleSetupConsole.size() + 1}| server offline...")
             # scroll console if needed
             if self.__puzzleSetupConsole.size() > 3:
                 self.__puzzleSetupConsole.yview_scroll(1, UNITS)
+
 
     def __puzzleGame(self, create=False):
         self.__unPack()
@@ -412,8 +415,7 @@ class gui(ui):
         if create:
             t = "PUT IN SOME COUNTERS, ENTER A PUZZLE ID THEN SAVE"
         else:
-            player = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[
-                self.__pTwoColour]
+            player = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
             t = f"PLAY THE BEST MOVE POSSIBLE FOR {player}"
         Label(frameMenu, text=t, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N + S + E + W)
 
@@ -1402,6 +1404,27 @@ class gui(ui):
                                     self.__gameConsole.yview_scroll(1, UNITS)
                                 self.__waitingForUpdateStats = False
 
+            # wait for puzzle load
+            elif self.__waitingForLoadPuzzle:
+                while self.__waitingForLoadPuzzle:
+                    self.__root.update()
+                    await s(0.1)
+                    # non-blocking check if there is a message in the receive queue
+                    if self.__client.canRcv():
+                        message = await self.__client.recv()
+                        cmd = message.get("cmd", None)
+                        if cmd == "loadPuzzle" and message.get("to", None) == self.__username.get():
+                            self.__loadPuzzleID, moves, self.__puzzleSolution = None, None, None
+                            if message.get("puzzleInfo", None) is not None:
+                                self.__loadPuzzleID, moves, self.__puzzleSolution = message.get("puzzleInfo", None)
+                                self.__game.loadPuzzle(moves)
+                                self.__puzzleGame()
+                            else:
+                                # print error message to console
+                                self.__puzzleSetupConsole.insert(END, f"{self.__puzzleSetupConsole.size() + 1}| ID invalid...")
+                                # scroll console if needed
+                                if self.__puzzleSetupConsole.size() > 3:
+                                    self.__puzzleSetupConsole.yview_scroll(1, UNITS)
 
 class terminal(ui):
     def __init__(self, network):
