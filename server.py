@@ -129,7 +129,7 @@ class server:
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
-                    await self.__messageQ.put(dumps(msg))#
+                    await self.__messageQ.put(dumps(msg))
 
             elif dictionary.get('cmd', None) == 'loadPuzzle':
                 username = dictionary.get('from', None)
@@ -172,6 +172,40 @@ class server:
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
 
+            elif dictionary.get('cmd', None) == 'loadGame':
+                username = dictionary.get('from', None)
+                gameName = dictionary.get('gameName', None)
+                connection = sqlite3.connect('connectFour.db')
+                # get the game info of the game identified by the name
+                sql = f"SELECT NAME, MOVES, OPPONENT, ACCOUNT from SAVES WHERE NAME == '{gameName}' and ACCOUNT == '{username}'"
+                gameInfo = connection.execute(sql)
+                gameInfoRow = None
+                for row in gameInfo:
+                    gameInfoRow = row
+                connection.close()
+                msg = {'to': username, 'cmd': 'loadPuzzle', "gameInfo": gameInfoRow}
+                print(msg)
+                await self.__messageQ.put(dumps(msg))
+
+            elif dictionary.get('cmd', None) == 'saveGame':
+                # connect to database
+                connection = sqlite3.connect('connectFour.db')
+                try:
+                    # add game to database
+                    sql = f"""INSERT INTO SAVES (NAME,MOVES,OPPONENT,ACCOUNT)
+                                  VALUES ('{dictionary.get('gameName', None)}', '{dictionary.get('gameMoves', None)}', '{dictionary.get('opponent', None)}', '{dictionary.get('from', None)}')"""
+                    connection.execute(sql)
+                    connection.commit()
+                    # close connection
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'saveGame', "valid": True}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+                except IntegrityError:
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'saveGame', "valid": False}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
 
             else:
                 await self.__messageQ.put(message)

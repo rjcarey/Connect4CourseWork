@@ -1,6 +1,3 @@
-import sqlite3
-
-
 class gameError(Exception):
     pass
 
@@ -149,49 +146,13 @@ class game:
             # if there are no moves to undo, raise an error message
             raise gameError("no moves to undo...")
 
-    def save(self, name, opponent, account):
-        # connect to database
-        connection = sqlite3.connect('connectFour.db')
-
-        # get a string of the moves
-        moves = ""
-        for move in self.__Played:
-            moves += str(move[1])
-
-        # add game to database
-        sql = f"""INSERT INTO SAVES (NAME,MOVES,OPPONENT,ACCOUNT)
-              VALUES ('{name}', '{moves}', '{opponent}', '{account}')"""
-        connection.execute(sql)
-        connection.commit()
-
-        # close connection
-        connection.close()
-
-    def load(self, name, username):
-        connection = sqlite3.connect('connectFour.db')
-        # get the game info of the game identified by the name
-        sql = f"SELECT NAME, MOVES, OPPONENT, ACCOUNT from SAVES WHERE NAME == '{name}' and ACCOUNT == '{username}'"
-        gameInfo = connection.execute(sql)
-        name, moves, opponent, account = None, None, None, None
-        for row in gameInfo:
-            name, moves, opponent, account = row
-        # if the game return the move string, play the moves
-        if moves:
-            for move in moves:
-                self.play(int(move)+1)
-            connection.close()
-            # return the opponent type
-            return opponent
-        else:
-            # if not then there was no saved game with this name so raise an error
-            connection.close()
-            raise nameError("name invalid...")
-
-    def loadPuzzle(self, moves):
-        # play the stored moves
+    def load(self, moves):
         for move in moves:
             self.play(int(move)+1)
-        # reset the played moves so that the game can't be undone past the save
+
+    def loadPuzzle(self, moves):
+        self.load(moves)
+        # reset the played moves so that the puzzle can't be undone past the save
         self.__Played = []
 
     @property

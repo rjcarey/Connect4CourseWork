@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, \
     OptionMenu, Entry
-from game import game, gameError, nameError
+from game import game, gameError
 from time import sleep
 from players import Ai
 from client import client
@@ -9,7 +9,6 @@ from aioconsole import ainput
 from time import localtime, time
 from asyncio import sleep as s
 from asyncio import get_event_loop
-from sqlite3 import IntegrityError
 from hashlib import pbkdf2_hmac
 
 
@@ -60,6 +59,9 @@ class gui(ui):
         self.__waitingForUpdateStats = False
         self.__waitingForLoadPuzzle = False
         self.__waitingForSavePuzzle = False
+        self.__waitingForLoadGame = False
+        self.__waitingForSaveGame = False
+        self.__guest = False
 
         self.__opponent = None
         self.__opponentType = StringVar(value="Human")
@@ -164,6 +166,7 @@ class gui(ui):
 
     def __guestLogIn(self):
         self.__guest = True
+        self.__username.set("Enter Username")
         self.__menu()
 
     def __menu(self):
@@ -828,16 +831,14 @@ class gui(ui):
         self.__toUnpack.append(self.__loadFrame)
 
     def __loadGame(self):
-        username = "guest" if self.__guest else self.__username.get()
-        try:
-            opponent = self.__game.load(self.__loadName.get(), username)
-            self.__opponentType.set(opponent)
-            self.__cancelLoad()
-            self.__loadCreated = False
-            self.__play()
-        except nameError as e:
+        username = "Enter Username" if self.__guest else self.__username.get()
+        if self.__network:
+            message = {"from": username, "cmd": "loadGame", "gameName": self.__loadName.get()}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForLoadGame = True
+        else:
             # print error message to console
-            self.__loadConsole.insert(END, f"{self.__loadConsole.size() + 1}| {e}")
+            self.__loadConsole.insert(END, f"{self.__loadConsole.size() + 1}| server offline...")
             # scroll console if needed
             if self.__loadConsole.size() > 3:
                 self.__loadConsole.yview_scroll(1, UNITS)
@@ -1032,14 +1033,14 @@ class gui(ui):
             self.__toUnpack.append(self.__saveAndExitFrame)
 
     def __saveGame(self):
-        username = "guest" if self.__guest else self.__username.get()
-        # try to save
-        try:
-            self.__game.save(self.__gameName.get(), self.__opponentType.get(), username)
-            self.__dismissGame()
-        # if the name is not unique, print an error message
-        except IntegrityError:
-            self.__saveConsole.insert(END, f"{self.__saveConsole.size() + 1}| name taken, try again...")
+        username = "Enter Username" if self.__guest else self.__username.get()
+        moves = self.__game.getMoves
+        if self.__network:
+            message = {"from": username, "cmd": "saveGame", "gameName": self.__gameName.get(), "gameMoves": moves, "opponent": self.__opponentType.get()}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForSaveGame = True
+        else:
+            self.__saveConsole.insert(END, f"{self.__saveConsole.size() + 1}| server offline...")
             if self.__saveConsole.size() > 3:
                 self.__saveConsole.yview_scroll(1, UNITS)
 
@@ -1326,7 +1327,6 @@ class gui(ui):
                         cmd = message.get("cmd", None)
                         if cmd == "logIn" and message.get("to", None) == self.__username.get():
                             try:
-                                username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = None, None, None, 0, 0, 0, 0, 0, 0
                                 if message.get("accountInfo", None) is not None:
                                     username, key, hashedPassword, self.__statsPlayed, self.__statsWon, self.__statsLost, self.__statsDrawn, self.__statsPFin, self.__statsPMade = message.get("accountInfo", None)
                                     salt = key.to_bytes(4, byteorder="big")
@@ -1409,7 +1409,6 @@ class gui(ui):
                         message = await self.__client.recv()
                         cmd = message.get("cmd", None)
                         if cmd == "loadPuzzle" and message.get("to", None) == self.__username.get():
-                            self.__loadPuzzleID, moves, self.__puzzleSolution = None, None, None
                             if message.get("puzzleInfo", None) is not None:
                                 self.__loadPuzzleID, moves, self.__puzzleSolution = message.get("puzzleInfo", None)
                                 self.__game.loadPuzzle(moves)
@@ -1448,6 +1447,52 @@ class gui(ui):
                                 if self.__gameConsole.size() > 3:
                                     self.__gameConsole.yview_scroll(1, UNITS)
                                 self.__waitingForSavePuzzle = False
+
+            # wait for puzzle load
+            elif self.__waitingForLoadGame:
+                while self.__waitingForLoadGame:
+                    self.__root.update()
+                    await s(0.1)
+                    # non-blocking check if there is a message in the receive queue
+                    if self.__client.canRcv():
+                        message = await self.__client.recv()
+                        cmd = message.get("cmd", None)
+                        if cmd == "loadGame" and message.get("to", None) == self.__username.get():
+                            if message.get("gameInfo", None) is not None:
+                                name, moves, opponent, account = message.get("gameInfo", None)
+                                self.__opponentType.set(opponent)
+                                self.__game.load(moves)
+                                self.__cancelLoad()
+                                self.__loadCreated = False
+                                self.__play()
+                                self.__waitingForLoadGame = False
+                            else:
+                                # print error message to console
+                                self.__loadConsole.insert(END, f"{self.__loadConsole.size() + 1}| game name invalid...")
+                                # scroll console if needed
+                                if self.__loadConsole.size() > 3:
+                                    self.__loadConsole.yview_scroll(1, UNITS)
+                                self.__waitingForLoadGame = False
+
+            # wait for save game response
+            elif self.__waitingForSaveGame:
+                while self.__waitingForSaveGame:
+                    self.__root.update()
+                    await s(0.1)
+                    # non-blocking check if there is a message in the receive queue
+                    if self.__client.canRcv():
+                        message = await self.__client.recv()
+                        cmd = message.get("cmd", None)
+                        if cmd == "saveGame" and message.get("to", None) == self.__username.get():
+                            if message.get("valid", False):
+                                self.__dismissGame()
+                                self.__waitingForSaveGame = False
+                            else:
+                                # print error message
+                                self.__saveConsole.insert(END, f"{self.__saveConsole.size() + 1}| name taken, try again...")
+                                if self.__saveConsole.size() > 3:
+                                    self.__saveConsole.yview_scroll(1, UNITS)
+                                self.__waitingForSaveGame = False
 
 
 class terminal(ui):
