@@ -152,6 +152,27 @@ class server:
                 print(msg)
                 await self.__messageQ.put(dumps(msg))
 
+            elif dictionary.get('cmd', None) == 'savePuzzle':
+                # connect to database
+                connection = sqlite3.connect('connectFour.db')
+                try:
+                    # add game to database
+                    sql = f"""INSERT INTO PUZZLES (ID,MOVES,SOLUTION) 
+                                        VALUES ('{dictionary.get('puzzleID', None)}', '{dictionary.get('puzzleMoves', None)}', '{dictionary.get('puzzleSolution', None)}')"""
+                    connection.execute(sql)
+                    connection.commit()
+                    # close connection
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'savePuzzle', "valid": True}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+                except IntegrityError:
+                    connection.close()
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'savePuzzle', "valid": False}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+
+
             else:
                 await self.__messageQ.put(message)
 

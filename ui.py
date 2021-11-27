@@ -59,6 +59,7 @@ class gui(ui):
         self.__waitingForAddAccount = False
         self.__waitingForUpdateStats = False
         self.__waitingForLoadPuzzle = False
+        self.__waitingForSavePuzzle = False
 
         self.__opponent = None
         self.__opponentType = StringVar(value="Human")
@@ -339,7 +340,6 @@ class gui(ui):
             if self.__puzzleSetupConsole.size() > 3:
                 self.__puzzleSetupConsole.yview_scroll(1, UNITS)
 
-
     def __puzzleGame(self, create=False):
         self.__unPack()
         self.__puzzleInProgress = True
@@ -535,18 +535,13 @@ class gui(ui):
         # get id
         ID = self.__puzzleID.get()
         # try to save
-        try:
-            self.__game.savePuzzle(ID, solution)
-            self.__exitPuzzle()
-            # update stats
-            if not self.__guest and self.__network:
-                self.__statsPMade += 1
-                message = {"from": self.__username.get(), "cmd": "updatePMade", "pMade": self.__statsPMade}
-                get_event_loop().create_task(self.__client.send(message))
-                self.__waitingForUpdateStats = True
-        # if the name is not unique, print an error message
-        except IntegrityError:
-            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| ID taken, try again...")
+        moves = self.__game.getMoves
+        if self.__network:
+            message = {"from": self.__username.get(), "cmd": "savePuzzle", "puzzleID": ID, "puzzleMoves": moves, "puzzleSolution": solution}
+            get_event_loop().create_task(self.__client.send(message))
+            self.__waitingForSavePuzzle = True
+        else:
+            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| server offline...")
             if self.__gameConsole.size() > 3:
                 self.__gameConsole.yview_scroll(1, UNITS)
 
@@ -1419,12 +1414,41 @@ class gui(ui):
                                 self.__loadPuzzleID, moves, self.__puzzleSolution = message.get("puzzleInfo", None)
                                 self.__game.loadPuzzle(moves)
                                 self.__puzzleGame()
+                                self.__waitingForLoadPuzzle = False
                             else:
                                 # print error message to console
                                 self.__puzzleSetupConsole.insert(END, f"{self.__puzzleSetupConsole.size() + 1}| ID invalid...")
                                 # scroll console if needed
                                 if self.__puzzleSetupConsole.size() > 3:
                                     self.__puzzleSetupConsole.yview_scroll(1, UNITS)
+                                self.__waitingForLoadPuzzle = False
+
+            # wait for save game response
+            elif self.__waitingForSavePuzzle:
+                while self.__waitingForSavePuzzle:
+                    self.__root.update()
+                    await s(0.1)
+                    # non-blocking check if there is a message in the receive queue
+                    if self.__client.canRcv():
+                        message = await self.__client.recv()
+                        cmd = message.get("cmd", None)
+                        if cmd == "savePuzzle" and message.get("to", None) == self.__username.get():
+                            if message.get("valid", False):
+                                self.__exitPuzzle()
+                                self.__waitingForSavePuzzle = False
+                                # update stats
+                                if not self.__guest and self.__network:
+                                    self.__statsPMade += 1
+                                    message = {"from": self.__username.get(), "cmd": "updatePMade", "pMade": self.__statsPMade}
+                                    get_event_loop().create_task(self.__client.send(message))
+                                    self.__waitingForUpdateStats = True
+                            else:
+                                # print error message
+                                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| ID taken, try again...")
+                                if self.__gameConsole.size() > 3:
+                                    self.__gameConsole.yview_scroll(1, UNITS)
+                                self.__waitingForSavePuzzle = False
+
 
 class terminal(ui):
     def __init__(self, network):

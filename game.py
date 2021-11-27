@@ -194,23 +194,13 @@ class game:
         # reset the played moves so that the game can't be undone past the save
         self.__Played = []
 
-    def savePuzzle(self, ID, solution):
-        # connect to database
-        connection = sqlite3.connect('connectFour.db')
-
+    @property
+    def getMoves(self):
         # get a string of the moves
         moves = ""
         for move in self.__Played:
             moves += str(move[1])
-
-        # add game to database
-        sql = f"""INSERT INTO PUZZLES (ID,MOVES,SOLUTION) 
-                    VALUES ('{ID}', '{moves}', '{solution}')"""
-        connection.execute(sql)
-        connection.commit()
-
-        # close connection
-        connection.close()
+        return moves
 
     def getSpace(self, row, column):
         # return the counter at coordinates passed in
