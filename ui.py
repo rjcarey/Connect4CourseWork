@@ -970,7 +970,7 @@ class gui(ui):
         # dismiss button
         Button(frameMenu, text="Dismiss", command=self.__dismissGame, font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=N + S + E + W)
 
-        if not self.__network:
+        if not self.__localGame:
             # undo button
             Button(frameMenu, text="Undo", command=self.__undoMove, font='{Copperplate Gothic Light} 14').grid(row=0, column=1, sticky=N + S + E + W)
             # save and exit button
