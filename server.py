@@ -42,7 +42,7 @@ class server:
                 username = dictionary.get('from', None)
                 connection = sqlite3.connect('connectFour.db')
                 # verify account details
-                sql = f"SELECT * from ACCOUNTS WHERE USERNAME == '{username}'"
+                sql = f"SELECT * FROM ACCOUNTS WHERE USERNAME == '{username}'"
                 accountInfo = connection.execute(sql)
                 accountInfoRow = None
                 for row in accountInfo:
@@ -62,7 +62,7 @@ class server:
                 connection = sqlite3.connect('connectFour.db')
                 try:
                     # try to add the account to the database
-                    sql = f"""INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE) VALUES ("{dictionary.get('from', None)}", "{key}", "{hashedPassword}", 0, 0, 0, 0, 0, 0)"""
+                    sql = f"INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE) VALUES ('{dictionary.get('from', None)}', '{key}', '{hashedPassword}', 0, 0, 0, 0, 0, 0)"
                     connection.execute(sql)
                     connection.commit()
                     # close connection
@@ -79,7 +79,7 @@ class server:
             elif dictionary.get('cmd', None) == 'updatePFin':
                 connection = sqlite3.connect('connectFour.db')
                 try:
-                    stmt = f"UPDATE ACCOUNTS set SPFIN = {dictionary.get('pFin', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    stmt = f"UPDATE ACCOUNTS SET SPFIN = {dictionary.get('pFin', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
                     connection.execute(stmt)
                     connection.commit()
                     connection.close()
@@ -95,7 +95,7 @@ class server:
             elif dictionary.get('cmd', None) == 'updatePMade':
                 connection = sqlite3.connect('connectFour.db')
                 try:
-                    stmt = f"UPDATE ACCOUNTS set SPMADE = {dictionary.get('pMade', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    stmt = f"UPDATE ACCOUNTS SET SPMADE = {dictionary.get('pMade', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
                     connection.execute(stmt)
                     connection.commit()
                     connection.close()
@@ -112,13 +112,13 @@ class server:
                 connection = sqlite3.connect('connectFour.db')
                 try:
                     connection = sqlite3.connect('connectFour.db')
-                    stmt = f"UPDATE ACCOUNTS set SPLAYED = {dictionary.get('played', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    stmt = f"UPDATE ACCOUNTS SET SPLAYED = {dictionary.get('played', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
                     connection.execute(stmt)
-                    stmt = f"UPDATE ACCOUNTS set SWON = {dictionary.get('won', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    stmt = f"UPDATE ACCOUNTS SET SWON = {dictionary.get('won', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
                     connection.execute(stmt)
-                    stmt = f"UPDATE ACCOUNTS set SLOST = {dictionary.get('lost', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    stmt = f"UPDATE ACCOUNTS SET SLOST = {dictionary.get('lost', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
                     connection.execute(stmt)
-                    stmt = f"UPDATE ACCOUNTS set SDRAWN = {dictionary.get('drawn', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
+                    stmt = f"UPDATE ACCOUNTS SET SDRAWN = {dictionary.get('drawn', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
                     connection.execute(stmt)
                     connection.commit()
                     connection.close()
@@ -137,12 +137,12 @@ class server:
                 connection = sqlite3.connect('connectFour.db')
                 if puzzleCode == "random":
                     # get random puzzle id from the saved puzzles
-                    sql = f"SELECT * from PUZZLES"
+                    sql = f"SELECT * FROM PUZZLES"
                     puzzleInfo = connection.execute(sql)
                     results = puzzleInfo.fetchall()
                     puzzleCode = results[randint(0, len(results) - 1)][0]
                 # get the puzzle game info using the puzzle id
-                sql = f"SELECT ID, MOVES, SOLUTION from PUZZLES WHERE ID == '{puzzleCode}'"
+                sql = f"SELECT ID, MOVES, SOLUTION FROM PUZZLES WHERE ID == '{puzzleCode}'"
                 puzzleInfo = connection.execute(sql)
                 puzzleInfoRow = None
                 for row in puzzleInfo:
@@ -157,8 +157,7 @@ class server:
                 connection = sqlite3.connect('connectFour.db')
                 try:
                     # add game to database
-                    sql = f"""INSERT INTO PUZZLES (ID,MOVES,SOLUTION) 
-                                        VALUES ('{dictionary.get('puzzleID', None)}', '{dictionary.get('puzzleMoves', None)}', '{dictionary.get('puzzleSolution', None)}')"""
+                    sql = f"INSERT INTO PUZZLES (ID,MOVES,SOLUTION) VALUES ('{dictionary.get('puzzleID', None)}', '{dictionary.get('puzzleMoves', None)}', '{dictionary.get('puzzleSolution', None)}')"
                     connection.execute(sql)
                     connection.commit()
                     # close connection
@@ -177,7 +176,7 @@ class server:
                 gameName = dictionary.get('gameName', None)
                 connection = sqlite3.connect('connectFour.db')
                 # get the game info of the game identified by the name
-                sql = f"SELECT NAME, MOVES, OPPONENT, ACCOUNT from SAVES WHERE NAME == '{gameName}' and ACCOUNT == '{username}'"
+                sql = f"SELECT NAME, MOVES, OPPONENT, ACCOUNT FROM SAVES WHERE NAME == '{gameName}' AND ACCOUNT == '{username}'"
                 gameInfo = connection.execute(sql)
                 gameInfoRow = None
                 for row in gameInfo:
@@ -192,8 +191,7 @@ class server:
                 connection = sqlite3.connect('connectFour.db')
                 try:
                     # add game to database
-                    sql = f"""INSERT INTO SAVES (NAME,MOVES,OPPONENT,ACCOUNT)
-                                  VALUES ('{dictionary.get('gameName', None)}', '{dictionary.get('gameMoves', None)}', '{dictionary.get('opponent', None)}', '{dictionary.get('from', None)}')"""
+                    sql = f"INSERT INTO SAVES (NAME,MOVES,OPPONENT,ACCOUNT) VALUES ('{dictionary.get('gameName', None)}', '{dictionary.get('gameMoves', None)}', '{dictionary.get('opponent', None)}', '{dictionary.get('from', None)}')"
                     connection.execute(sql)
                     connection.commit()
                     # close connection

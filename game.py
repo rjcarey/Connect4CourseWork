@@ -43,9 +43,9 @@ class game:
     def getRun(self):
         # check horizontal
         player = game.EMPTY
-        counters = []
         for ir, row in enumerate(self.Board):
             run = 0
+            counters = []
             for ic, col in enumerate(row):
                 if col == player:
                     run += 1

@@ -40,6 +40,8 @@ class gui(ui):
 
         self.__running = False
         self.__gameInProgress = False
+        self.__puzzleInProgress = False
+        self.__puzzleOver = True
         self.__helpCreated = False
         self.__setupCreated = False
         self.__typeChoiceCreated = False
