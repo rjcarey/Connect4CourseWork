@@ -2,26 +2,20 @@ class gameError(Exception):
     pass
 
 
-class nameError(Exception):
-    pass
-
-
 class game:
-
+    # Class constants for counters
     EMPTY = " "
     PONE = "❂"
     PTWO = "⍟"
     
     def __init__(self):
-        # store the board
+        # Store the board, a 7x6 2D array, with each element starting as an 'EMPTY' space
         self.Board = [[game.EMPTY for _ in range(7)] for _ in range(6)]
-        # and whose turn it is
         self.__Player = game.PONE
-        # and the moves that are played in order
         self.__Played = []
 
     def __repr__(self):
-        # create a board display to be called when the object is printed
+        # Create a board display to be called when the object is printed
         board = game.EMPTY
         for column in range(1, 8):
             board += f"{column} "
@@ -36,12 +30,13 @@ class game:
     
     @property
     def getPlayer(self):
-        # return whose turn it is
+        # Return whose turn it is
         return self.__Player
 
     @property
     def getRun(self):
-        # check horizontal
+        # Complex user-defined algorithm to find a run of four counters, if found return the player's counter and the coordinates of the counters in the run
+        # Check for a horizontal run
         player = game.EMPTY
         for ir, row in enumerate(self.Board):
             run = 0
@@ -56,8 +51,7 @@ class game:
                     player = col
                     counters = [(ir, ic)]
                     run = 1
-
-        # check vertical
+        # Check for a vertical run
         player = game.EMPTY
         counters = []
         for column in range(7):
@@ -72,12 +66,11 @@ class game:
                     player = self.Board[row][column]
                     counters = [(row, column)]
                     run = 1
-
-        # check diagonal
+        # Check for a diagonal run
         for rowNum, row in enumerate(self.Board):
             for colNum, col in enumerate(row):
                 if col != game.EMPTY:
-                    # \ diagonal
+                    # Check \ diagonal
                     if colNum < 4 and rowNum < 3:
                         counterOne = self.Board[rowNum][colNum]
                         counterTwo = self.Board[rowNum + 1][colNum + 1]
@@ -85,8 +78,7 @@ class game:
                         counterFour = self.Board[rowNum + 3][colNum + 3]
                         if counterOne == counterTwo == counterThree == counterFour:
                             return col, [(rowNum, colNum), (rowNum + 1, colNum + 1), (rowNum + 2, colNum + 2), (rowNum + 3, colNum + 3)]
-
-                    # / diagonal
+                    # Check / diagonal
                     if colNum > 2 and rowNum < 3:
                         counterOne = self.Board[rowNum][colNum]
                         counterTwo = self.Board[rowNum + 1][colNum - 1]
@@ -94,56 +86,40 @@ class game:
                         counterFour = self.Board[rowNum + 3][colNum - 3]
                         if counterOne == counterTwo == counterThree == counterFour:
                             return col, [(rowNum, colNum), (rowNum + 1, colNum - 1), (rowNum + 2, colNum - 2), (rowNum + 3, colNum - 3)]
-        # check draw
-        occupiedCount = 0
-        for row in self.Board:
-            for col in row:
-                if col != game.EMPTY:
-                    occupiedCount += 1
-        if occupiedCount == 42:
-            return "Draw", []
-        return None, []
+        # Check for a draw
+        for col in self.Board[0]:
+            if col == game.EMPTY:
+                return None, []
+        return "Draw", []
 
     @property
     def getWinner(self):
-        # return the winner of the game and the winning run of counters
         winner, run = self.getRun
         return winner
 
     def play(self, column):
-        # change column number into an index
         col = column - 1
         if self.Board[0][col] != game.EMPTY:
-            # if the column is full, raise an error
+            # If the column is full, raise an error (Exception Handling)
             raise gameError("column full, play again...")
-        playedRow = 0
         for i, row in enumerate(reversed(self.Board)):
-            # for each slot in the column (from bottom to top) if the slot is empty, place a counter there
+            # Place the counter in the correct space
             if row[col] == game.EMPTY:
-                # set the space to the counter
                 row[col] = self.__Player
                 playedRow = i
-                # add the coordinates to the list of played moves
                 self.__Played.append((5 - playedRow, col))
                 break
-        # flip the turn
         self.__Player = game.PTWO if self.__Player == game.PONE else game.PONE
-        # return which row was played in
         return playedRow
 
     def undo(self):
-        # if at least one move has been played
         if self.__Played:
-            # get the coordinates of the last move
             lastRow, lastCol = self.__Played.pop()
-            # set the slot to be empty
             self.Board[lastRow][lastCol] = game.EMPTY
-            # flip the turn
             self.__Player = game.PTWO if self.__Player == game.PONE else game.PONE
-            # return the coordinates of the last move
             return lastRow, lastCol
         else:
-            # if there are no moves to undo, raise an error message
+            # If are no moves to undo raise an error (Exception Handling)
             raise gameError("no moves to undo...")
 
     def load(self, moves):

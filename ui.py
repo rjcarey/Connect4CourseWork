@@ -422,7 +422,7 @@ class gui(ui):
         else:
             player = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
             t = f"PLAY THE BEST MOVE POSSIBLE FOR {player}"
-        Label(frameMenu, text=t, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N + S + E + W)
+        Label(frameMenu, text=t, font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N + S + E + W)
 
         if create:
             self.__creative = True
@@ -433,7 +433,7 @@ class gui(ui):
         else:
             self.__creative = False
             # puzzle id label
-            Label(frameMenu, text=f"ID: {self.__loadPuzzleID}", font='{Copperplate Gothic Light} 14', bg='grey').grid(row=0, column=1, sticky=N + S + W + E)
+            Label(frameMenu, text=f"ID: {self.__loadPuzzleID}", font='{Copperplate Gothic Light} 14').grid(row=0, column=1, sticky=N + S + W + E)
             # solve button
             Button(frameMenu, text="Solve", command=self.__solvePuzzle, font='{Copperplate Gothic Light} 14').grid(row=1, column=1, sticky=N + S + W + E)
         # undo button
@@ -470,8 +470,7 @@ class gui(ui):
         elif not self.__puzzleOver:
             try:
                 # set the counter colour
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[
-                    self.__pTwoColour]
+                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # animate the counter
@@ -955,8 +954,9 @@ class gui(ui):
 
         # player turn label
         self.__playerTurn = StringVar()
+        counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
+        textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
         if self.__opponentType.get() == "Human" and not self.__localGame:
-            counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
             self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
         elif self.__opponentType.get() == "Human" and self.__localGame:
             if self.__clientTurn:
@@ -966,7 +966,8 @@ class gui(ui):
         else:
             self.__playerTurn.set('YOUR TURN\nCHOOSE COLUMN')
 
-        Label(frameMenu, textvariable=self.__playerTurn, bg='gray', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N + S + E + W)
+        self.__playerTurnLabel = Label(frameMenu, textvariable=self.__playerTurn, fg=textColour, font='{Copperplate Gothic Light} 14')
+        self.__playerTurnLabel.grid(row=0, column=0, sticky=N + S + E + W)
         # dismiss button
         Button(frameMenu, text="Dismiss", command=self.__dismissGame, font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=N + S + E + W)
 
@@ -1063,6 +1064,8 @@ class gui(ui):
                 self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
                 if not self.__puzzleInProgress:
                     counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
+                    textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                    self.__playerTurnLabel.config(fg=textColour)
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
                 else:
                     self.__puzzleOver = False
@@ -1108,9 +1111,11 @@ class gui(ui):
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
                 # change turn display
+                counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
+                textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                self.__playerTurnLabel.config(fg=textColour)
                 if self.__opponentType.get() == "Human" and not self.__localGame:
                     # if its pass and play, use the counter colour to say whose turn it is
-                    counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
                 elif self.__opponentType.get() == "Human" and self.__localGame:
                     # if it is a networked game, flip whose turn
@@ -1147,6 +1152,8 @@ class gui(ui):
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
                 # change turn display
+                textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                self.__playerTurnLabel.config(fg=textColour)
                 self.__playerTurn.set(f'YOUR TURN\nCHOOSE COLUMN')
                 # check if played a winning move
                 self.__checkIfWon()
@@ -1157,6 +1164,8 @@ class gui(ui):
             self.__gameOver = True
             if self.__game.getWinner != "Draw":
                 winner = self.__counters[self.__pOneColour] if self.__game.getWinner == game.PONE else self.__counters[self.__pTwoColour]
+                textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                self.__playerTurnLabel.config(fg=textColour)
                 if self.__opponentType.get() == "Human" and not self.__localGame:
                     self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
                 elif not self.__localGame:
@@ -1166,6 +1175,8 @@ class gui(ui):
                     winner = 'YOU' if self.__game.getWinner == game.PONE and self.__firstTurn.get() == self.__username.get() else 'OPPONENT'
                     self.__playerTurn.set(f'{winner} WON\nGOOD GAME!')
             else:
+                textColour = "#000000"
+                self.__playerTurnLabel.config(fg=textColour)
                 self.__playerTurn.set(f'THE GAME WAS DRAWN')
 
             if self.__localGame:
@@ -1232,7 +1243,10 @@ class gui(ui):
         try:
             await self.__client.run()
         except ConnectionRefusedError:
-            print("server offline...")
+            self.__network = False
+            self.__logInConsole.insert(END, f"{self.__logInConsole.size() + 1}| server offline, play as guest...")
+            if self.__logInConsole.size() > 3:
+                self.__logInConsole.yview_scroll(1, UNITS)
 
     async def run(self):
         # simulate mainloop so that the gui and client can both run

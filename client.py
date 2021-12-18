@@ -13,46 +13,41 @@ class client:
 
     def quit(self):
         self.__running = False
-        # put items into each queue without blocking
         self.__txq.put_nowait(dumps("Stop"))
         self.__rxq.put_nowait(dumps("Stop"))
 
     async def send(self, message):
-        # wait to put message in the transmit queue
-        # print(message)
+        # Non-blocking wait to put message in the transmit queue as a string
         await self.__txq.put(dumps(message))
 
     async def recv(self):
-        # wait until a message is received
+        # Non-blocking wait until a message is received and return it as a string
         message = await self.__rxq.get()
         return loads(message)
 
     def canRcv(self):
+        # Non-blocking check to check if there are received messages to handle
         return False if self.__rxq.empty() else True
 
     async def __consumer_handler(self, websocket):
-        # while the client is running
         while self.__running:
-            # wait to receive a message from the websocket
+            # Non-blocking wait to receive a message from the server
             message = await websocket.recv()
-            # wait to put it in the receive queue
+            # Non-blocking wait to put the message in the receive queue
             await self.__rxq.put(message)
 
     async def __producer_handler(self, websocket):
-        # while the client is running
         while self.__running:
-            # wait for a message to transmit
+            # Non-blocking wait for a message to transmit
             message = await self.__txq.get()
-            # wait to send the message to the websocket
+            # Non-blocking wait to send the message to the server
             await websocket.send(message)
 
     async def run(self):
-        # set the client state to be running
         self.__running = True
         async with connect(self.__uri) as websocket:
-            # done = completed tasks, pending = uncompleted tasks
-            # repeat call consumer handler then call producer handler until the first task is complete
+            # Repeatedly call the consumer handler method then call producer handler method until the first task is complete
             done, pending = await wait([create_task(self.__consumer_handler(websocket)), create_task(self.__producer_handler(websocket))], return_when=FIRST_COMPLETED)
-            # cancel remaining tasks
+            # Cancel remaining tasks
             for task in pending:
                 task.cancel()
