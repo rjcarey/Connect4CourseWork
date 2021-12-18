@@ -73,11 +73,12 @@ class gui(ui):
         self.__client = client()
         self.__clientTurn = True
 
-        self.__colours = ['#ff0000', '#e6e600', '#cc00ff', '#ff33cc', '#ff6600', '#0099cc', '#33cc33', '#000000']
-        self.__highlights = ['#ff9999', '#ffffb3', '#cc99ff', '#ff99cc', '#ffcc99', '#66ccff', '#99ff99', '#808080']
-        self.__counters = ['RED', 'YELLOW', 'PURPLE', 'PINK', 'ORANGE', 'BLUE', 'GREEN', 'BLACK']
-        self.__pOneColour = 0
-        self.__pTwoColour = 1
+        # self.__colours = ['#ff0000', '#e6e600', '#cc00ff', '#ff33cc', '#ff6600', '#0099cc', '#33cc33', '#000000']
+        # self.__highlights = ['#ff9999', '#ffffb3', '#cc99ff', '#ff99cc', '#ffcc99', '#66ccff', '#99ff99', '#808080']
+        # self.__counters = ['RED', 'YELLOW', 'PURPLE', 'PINK', 'ORANGE', 'BLUE', 'GREEN', 'BLACK']
+        self.__counters = {'RED': ('#ff0000', '#ff9999'), 'YELLOW': ('#e6e600', '#ffffb3'), 'PURPLE': ('#cc00ff', '#cc99ff'), 'PINK': ('#ff33cc', '#ff99cc'), 'ORANGE': ('#ff6600', '#ffcc99'), 'BLUE': ('#0099cc', '#66ccff'), 'GREEN': ('#33cc33', '#99ff99'), 'BLACK': ('#000000', '#808080')}
+        self.__pOneColour = 'RED'
+        self.__pTwoColour = 'YELLOW'
 
         self.__username = StringVar()
         self.__password = StringVar()
@@ -279,13 +280,13 @@ class gui(ui):
             Label(frameMiddle, text=f"Player 1 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0,
                                                                                                                   column=0,
                                                                                                                   sticky=W)
-            pOneDropDown = OptionMenu(frameMiddle, self.__pOne, *self.__counters)
+            pOneDropDown = OptionMenu(frameMiddle, self.__pOne, *self.__counters.keys())
             pOneDropDown.configure(font='{Copperplate Gothic Light} 14')
             pOneDropDown.grid(row=0, column=1, sticky=W)
             Label(frameMiddle, text=f"Player 2 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=1,
                                                                                                                   column=0,
                                                                                                                   sticky=W)
-            pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters)
+            pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters.keys())
             pTwoDropDown.configure(font='{Copperplate Gothic Light} 14')
             pTwoDropDown.grid(row=1, column=1, sticky=W)
 
@@ -350,11 +351,8 @@ class gui(ui):
         self.__puzzleInProgress = True
 
         # set the colours
-        for i, colour in enumerate(self.__counters):
-            if colour == self.__pOne.get():
-                self.__pOneColour = i
-            elif colour == self.__pTwo.get():
-                self.__pTwoColour = i
+        self.__pOneColour = self.__pOne.get()
+        self.__pTwoColour = self.__pTwo.get()
 
         frameButtons = Frame(self.__root, bg='#9DE3FD')
         frameButtons.pack()
@@ -395,9 +393,9 @@ class gui(ui):
                 # create counter slots
                 space = self.__game.getSpace(row, column)
                 if space == game.PONE:
-                    counterColour = self.__colours[self.__pOneColour]
+                    counterColour = self.__counters[self.__pOneColour][0]
                 elif space == game.PTWO:
-                    counterColour = self.__colours[self.__pTwoColour]
+                    counterColour = self.__counters[self.__pTwoColour][0]
                 else:
                     counterColour = "white"
                 if self.__shape.get() == 'SQUARE':
@@ -420,7 +418,7 @@ class gui(ui):
         if create:
             t = "PUT IN SOME COUNTERS, ENTER A PUZZLE ID THEN SAVE"
         else:
-            player = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
+            player = self.__pOneColour if self.__game.getPlayer == game.PONE else self.__pTwoColour
             t = f"PLAY THE BEST MOVE POSSIBLE FOR {player}"
         Label(frameMenu, text=t, font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=N + S + E + W)
 
@@ -470,7 +468,7 @@ class gui(ui):
         elif not self.__puzzleOver:
             try:
                 # set the counter colour
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # animate the counter
@@ -564,13 +562,13 @@ class gui(ui):
             # otherwise,
             else:
                 # play move
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 row = 5 - self.__game.play(column + 1)
                 # animate drop
                 self.__animatedDrop(row, column, counter)
                 self.__canvas.itemconfig(self.__spaces[row][column], fill=counter)
                 # highlight solution
-                counter = self.__highlights[self.__pOneColour] if not self.__game.getPlayer == game.PONE else self.__highlights[self.__pTwoColour]
+                counter = self.__counters[self.__pOneColour][1] if not self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][1]
                 self.__canvas.itemconfig(self.__spaces[row][column], fill=counter)
                 self.__puzzleOver = True
 
@@ -628,11 +626,11 @@ class gui(ui):
             self.__pTwo = StringVar()
             self.__pTwo.set("YELLOW")
             Label(frameMiddle, text=f"Player 1 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=0, column=0, sticky=W)
-            pOneDropDown = OptionMenu(frameMiddle, self.__pOne, *self.__counters)
+            pOneDropDown = OptionMenu(frameMiddle, self.__pOne, *self.__counters.keys())
             pOneDropDown.configure(font='{Copperplate Gothic Light} 14')
             pOneDropDown.grid(row=0, column=1, sticky=W)
             Label(frameMiddle, text=f"Player 2 colour:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=1, column=0, sticky=W)
-            pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters)
+            pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters.keys())
             pTwoDropDown.configure(font='{Copperplate Gothic Light} 14')
             pTwoDropDown.grid(row=1, column=1, sticky=W)
 
@@ -750,10 +748,10 @@ class gui(ui):
         self.__pOne.set("RED")
         self.__pTwo = StringVar()
         self.__pTwo.set("YELLOW")
-        pOneDropDown = OptionMenu(frameMiddle, self.__pOne, *self.__counters)
+        pOneDropDown = OptionMenu(frameMiddle, self.__pOne, *self.__counters.keys())
         pOneDropDown.configure(font='{Copperplate Gothic Light} 14')
         pOneDropDown.grid(row=1, column=1, sticky=W)
-        pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters)
+        pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters.keys())
         pTwoDropDown.configure(font='{Copperplate Gothic Light} 14')
         pTwoDropDown.grid(row=2, column=1, sticky=W)
 
@@ -887,11 +885,8 @@ class gui(ui):
         self.__gameInProgress = True
 
         # set the colours
-        for i, colour in enumerate(self.__counters):
-            if colour == self.__pOne.get():
-                self.__pOneColour = i
-            elif colour == self.__pTwo.get():
-                self.__pTwoColour = i
+        self.__pOneColour = self.__pOne.get()
+        self.__pTwoColour = self.__pTwo.get()
 
         frameButtons = Frame(self.__root, bg='#9DE3FD')
         frameButtons.pack()
@@ -934,9 +929,9 @@ class gui(ui):
                 # create counter slots
                 space = self.__game.getSpace(row, column)
                 if space == game.PONE:
-                    counterColour = self.__colours[self.__pOneColour]
+                    counterColour = self.__counters[self.__pOneColour][0]
                 elif space == game.PTWO:
-                    counterColour = self.__colours[self.__pTwoColour]
+                    counterColour = self.__counters[self.__pTwoColour][0]
                 else:
                     counterColour = "white"
                 if self.__shape.get() == 'SQUARE':
@@ -954,8 +949,8 @@ class gui(ui):
 
         # player turn label
         self.__playerTurn = StringVar()
-        counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
-        textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+        counter = self.__pOneColour if self.__game.getPlayer == game.PONE else self.__pTwoColour
+        textColour = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
         if self.__opponentType.get() == "Human" and not self.__localGame:
             self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
         elif self.__opponentType.get() == "Human" and self.__localGame:
@@ -1063,8 +1058,8 @@ class gui(ui):
                 row, col = self.__game.undo()
                 self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
                 if not self.__puzzleInProgress:
-                    counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
-                    textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                    counter = self.__pOneColour if self.__game.getPlayer == game.PONE else self.__pTwoColour
+                    textColour = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                     self.__playerTurnLabel.config(fg=textColour)
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
                 else:
@@ -1100,7 +1095,7 @@ class gui(ui):
         elif not self.__game.getWinner:
             try:
                 # set the counter colour
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 # play the counter
                 row = 5 - self.__game.play(col + 1)
                 # if playing a networked game send the move to the opponent
@@ -1111,8 +1106,8 @@ class gui(ui):
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
                 # change turn display
-                counter = self.__counters[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour]
-                textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__pOneColour if self.__game.getPlayer == game.PONE else self.__pTwoColour
+                textColour = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 self.__playerTurnLabel.config(fg=textColour)
                 if self.__opponentType.get() == "Human" and not self.__localGame:
                     # if its pass and play, use the counter colour to say whose turn it is
@@ -1145,14 +1140,14 @@ class gui(ui):
             self.__canvas.update()
             if self.__opponentType.get() != "Human" and not self.__game.getWinner:
                 # AI move
-                counter = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                counter = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 col = self.__opponent.getColumn(self.__game.Board, self.__game.getPlayer)
                 row = 5 - self.__game.play(col + 1)
                 # animate drop
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
                 # change turn display
-                textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                textColour = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 self.__playerTurnLabel.config(fg=textColour)
                 self.__playerTurn.set(f'YOUR TURN\nCHOOSE COLUMN')
                 # check if played a winning move
@@ -1163,8 +1158,8 @@ class gui(ui):
         if winningPlayer:
             self.__gameOver = True
             if self.__game.getWinner != "Draw":
-                winner = self.__counters[self.__pOneColour] if self.__game.getWinner == game.PONE else self.__counters[self.__pTwoColour]
-                textColour = self.__colours[self.__pOneColour] if self.__game.getPlayer == game.PONE else self.__colours[self.__pTwoColour]
+                winner = self.__pOneColour if self.__game.getWinner == game.PONE else self.__pTwoColour
+                textColour = self.__counters[winner][0]
                 self.__playerTurnLabel.config(fg=textColour)
                 if self.__opponentType.get() == "Human" and not self.__localGame:
                     self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
@@ -1185,7 +1180,7 @@ class gui(ui):
 
             # highlight winning run
             if run:
-                counter = self.__highlights[self.__pOneColour] if winningPlayer == game.PONE else self.__highlights[self.__pTwoColour]
+                counter = self.__counters[self.__pOneColour][1] if winningPlayer == game.PONE else self.__counters[self.__pTwoColour][1]
                 for row, col in run:
                     self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
 
