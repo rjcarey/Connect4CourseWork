@@ -1530,23 +1530,25 @@ class terminal(ui):
             self._client = client()
             # allow the user to enter a username
             self._name = await ainput("Enter a username: ")
-            try:
-                # hosting or joining?
-                playerType = await ainput("Would you like to host a game or join a game? [h|j]\n")
-                if playerType == 'h':
-                    # if hosting, send a host command
-                    await self._client.send({"from": self._name, "cmd": "tHost"})
-                    self._hosting = True
-                # if joining
-                elif playerType == 'j':
-                    # ask for the name of the host
-                    hostName = await ainput("Enter the host's username: ")
-                    # send a join command to the host
-                    await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
-                else:
-                    raise hostError
-            except hostError:
-                print("incorrect input, please enter 'h' or 'j'")
+            playerType = ''
+            while playerType not in ['h', 'j']:
+                try:
+                    # hosting or joining?
+                    playerType = await ainput("Would you like to host a game or join a game? [h|j]\n")
+                    if playerType == 'h':
+                        # if hosting, send a host command
+                        await self._client.send({"from": self._name, "cmd": "tHost"})
+                        self._hosting = True
+                    # if joining
+                    elif playerType == 'j':
+                        # ask for the name of the host
+                        hostName = await ainput("Enter the host's username: ")
+                        # send a join command to the host
+                        await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
+                    else:
+                        raise hostError
+                except hostError:
+                    print("incorrect input, please enter 'h' or 'j'")
 
             # while the client hasn't got an opponent
             while not self._opponent:

@@ -102,6 +102,7 @@ class game:
         if self.Board[0][col] != game.EMPTY:
             # If the column is full, raise an error (Exception Handling)
             raise gameError("column full, play again...")
+        playedRow = None
         for i, row in enumerate(reversed(self.Board)):
             # Place the counter in the correct space
             if row[col] == game.EMPTY:
@@ -123,24 +124,24 @@ class game:
             raise gameError("no moves to undo...")
 
     def load(self, moves):
+        # Play all the stored moves in order
         for move in moves:
             self.play(int(move)+1)
 
     def loadPuzzle(self, moves):
         self.load(moves)
-        # reset the played moves so that the puzzle can't be undone past the save
+        # Reset the played moves so that the puzzle can't be undone past how it was loaded
         self.__Played = []
 
     @property
     def getMoves(self):
-        # get a string of the moves
+        # Return a string of the moves in the order they were played
         moves = ""
         for move in self.__Played:
             moves += str(move[1])
         return moves
 
     def getSpace(self, row, column):
-        # return the counter at coordinates passed in
         return self.Board[row][column]
 
     def loadAI(self, board, counter):

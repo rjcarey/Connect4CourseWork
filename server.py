@@ -15,67 +15,63 @@ class server:
         self.__connections = set()
         # Set of hosts
         self.__hosts = set()
+        # Queue of messages to handle
         self.__messageQ = Queue()
 
     async def __consumer_handler(self, websocket):
         async for message in websocket:
             # Wait for a message and put it in the queue when received
+            # Handle some types of messages differently
             print(message)
             dictionary = eval(message)
-            if dictionary.get('cmd', None) == 'hHost':
+            if dictionary.get('cmd', None) == 'gHost':
                 self.__hosts.add(dictionary.get('from', None))
-
             elif dictionary.get('cmd', None) == 'cHost':
                 self.__hosts.remove(dictionary.get('from', None))
-
-            elif dictionary.get('cmd', None) == 'hJoin':
+            elif dictionary.get('cmd', None) == 'gJoin':
                 if dictionary.get('joinCode', None) in self.__hosts:
                     self.__hosts.remove(dictionary.get('joinCode', None))
                     await self.__messageQ.put(message)
                 else:
+                    # If the join code is not valid, return a HostNotFound message
                     msg = {'to': dictionary.get('from', None), 'cmd': 'hnf'}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get('cmd', None) == 'logIn':
-                username = dictionary.get('from', None)
+                # Verify account details
                 connection = sqlite3.connect('connectFour.db')
-                # verify account details
-                sql = f"SELECT * FROM ACCOUNTS WHERE USERNAME == '{username}'"
+                sql = f"SELECT * FROM ACCOUNTS WHERE USERNAME == '{dictionary.get('from', None)}'"
                 accountInfo = connection.execute(sql)
                 accountInfoRow = None
                 for row in accountInfo:
                     accountInfoRow = row
                 connection.close()
-                msg = {'to': username, 'cmd': 'logIn', "accountInfo": accountInfoRow}
+                msg = {'to': dictionary.get('from', None), 'cmd': 'logIn', "accountInfo": accountInfoRow}
                 print(msg)
                 await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get('cmd', None) == 'addAccount':
-                # get random salt
+                # Get random salt and convert it to an integer, then get hashed password
                 salt = urandom(4)
-                # get the integer value of the salt to store
                 key = int.from_bytes(salt, byteorder="big")
-                # get hashed password
                 hashedPassword = pbkdf2_hmac('sha256', dictionary.get('pword', None).encode('utf-8'), salt, 100000)
+                # Try to add the account to the database
                 connection = sqlite3.connect('connectFour.db')
                 try:
-                    # try to add the account to the database
                     sql = f"INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE) VALUES ('{dictionary.get('from', None)}', '{key}', '{hashedPassword}', 0, 0, 0, 0, 0, 0)"
                     connection.execute(sql)
                     connection.commit()
-                    # close connection
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": True}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
                 except IntegrityError:
+                    # If the username is not unique, return an 'invalid' message
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": False}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get('cmd', None) == 'updatePFin':
+                # Update the puzzles finished stat for an account
                 connection = sqlite3.connect('connectFour.db')
                 try:
                     stmt = f"UPDATE ACCOUNTS SET SPFIN = {dictionary.get('pFin', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
@@ -86,12 +82,13 @@ class server:
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
                 except OperationalError:
+                    # If the stat fails to update, return an 'invalid' message
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get('cmd', None) == 'updatePMade':
+                # Update the puzzles made stat for an account
                 connection = sqlite3.connect('connectFour.db')
                 try:
                     stmt = f"UPDATE ACCOUNTS SET SPMADE = {dictionary.get('pMade', None)} WHERE USERNAME = '{dictionary.get('from', None)}';"
@@ -102,12 +99,13 @@ class server:
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
                 except OperationalError:
+                    # If the stat fails to update, return an 'invalid' message
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get("cmd", None) == 'updateGameStats':
+                # Update the normal game stats for an account
                 connection = sqlite3.connect('connectFour.db')
                 try:
                     connection = sqlite3.connect('connectFour.db')
@@ -125,86 +123,78 @@ class server:
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
                 except OperationalError:
+                    # If the stats fail to update, return an 'invalid' message
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get('cmd', None) == 'loadPuzzle':
-                username = dictionary.get('from', None)
                 puzzleCode = dictionary.get('puzzleID', None)
+                # Retrieve the puzzle game info and send it back to the payer
                 connection = sqlite3.connect('connectFour.db')
                 if puzzleCode == "random":
-                    # get random puzzle id from the saved puzzles
+                    # Get random puzzle id from the saved puzzles if the player chose random
                     sql = f"SELECT * FROM PUZZLES"
                     puzzleInfo = connection.execute(sql)
                     results = puzzleInfo.fetchall()
                     puzzleCode = results[randint(0, len(results) - 1)][0]
-                # get the puzzle game info using the puzzle id
                 sql = f"SELECT ID, MOVES, SOLUTION FROM PUZZLES WHERE ID == '{puzzleCode}'"
                 puzzleInfo = connection.execute(sql)
                 puzzleInfoRow = None
                 for row in puzzleInfo:
                     puzzleInfoRow = row
                 connection.close()
-                msg = {'to': username, 'cmd': 'loadPuzzle', "puzzleInfo": puzzleInfoRow}
+                msg = {'to': dictionary.get('from', None), 'cmd': 'loadPuzzle', "puzzleInfo": puzzleInfoRow}
                 print(msg)
                 await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get('cmd', None) == 'savePuzzle':
-                # connect to database
+                # Try to add the game info to the database
                 connection = sqlite3.connect('connectFour.db')
                 try:
-                    # add game to database
                     sql = f"INSERT INTO PUZZLES (ID,MOVES,SOLUTION) VALUES ('{dictionary.get('puzzleID', None)}', '{dictionary.get('puzzleMoves', None)}', '{dictionary.get('puzzleSolution', None)}')"
                     connection.execute(sql)
                     connection.commit()
-                    # close connection
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'savePuzzle', "valid": True}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
                 except IntegrityError:
+                    # If the puzzle ID is not unique, return an 'invalid' message
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'savePuzzle', "valid": False}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get('cmd', None) == 'loadGame':
-                username = dictionary.get('from', None)
-                gameName = dictionary.get('gameName', None)
+                # Retrieve the game info of the requested game
                 connection = sqlite3.connect('connectFour.db')
-                # get the game info of the game identified by the name
-                sql = f"SELECT NAME, MOVES, OPPONENT, ACCOUNT FROM SAVES WHERE NAME == '{gameName}' AND ACCOUNT == '{username}'"
+                sql = f"SELECT NAME, MOVES, OPPONENT, ACCOUNT FROM SAVES WHERE NAME == '{dictionary.get('gameName', None)}' AND ACCOUNT == '{dictionary.get('from', None)}'"
                 gameInfo = connection.execute(sql)
                 gameInfoRow = None
                 for row in gameInfo:
                     gameInfoRow = row
                 connection.close()
-                msg = {'to': username, 'cmd': 'loadPuzzle', "gameInfo": gameInfoRow}
+                msg = {'to': dictionary.get('from', None), 'cmd': 'loadPuzzle', "gameInfo": gameInfoRow}
                 print(msg)
                 await self.__messageQ.put(dumps(msg))
-
             elif dictionary.get('cmd', None) == 'saveGame':
-                # connect to database
+                # Try to add the game info to the database
                 connection = sqlite3.connect('connectFour.db')
                 try:
-                    # add game to database
                     sql = f"INSERT INTO SAVES (NAME,MOVES,OPPONENT,ACCOUNT) VALUES ('{dictionary.get('gameName', None)}', '{dictionary.get('gameMoves', None)}', '{dictionary.get('opponent', None)}', '{dictionary.get('from', None)}')"
                     connection.execute(sql)
                     connection.commit()
-                    # close connection
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'saveGame', "valid": True}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
                 except IntegrityError:
+                    # If the game name is not unique, return an 'invalid' message
                     connection.close()
                     msg = {'to': dictionary.get('from', None), 'cmd': 'saveGame', "valid": False}
                     print(msg)
                     await self.__messageQ.put(dumps(msg))
-
             else:
+                # A message of any other command should just be forwarded
                 await self.__messageQ.put(message)
 
     async def __producer_handler(self):

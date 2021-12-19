@@ -11,6 +11,7 @@ def usage():
 
 async def startGame():
     network = False
+    ui = None
     if len(argv) == 2:
         if argv[1] == "t":
             print("initialising terminal mode...\n")
@@ -38,7 +39,6 @@ async def startGame():
     if network:
         tasks.append(create_task(ui.runClient()))
     await gather(*tasks)
-
     # If the user played in normal terminal mode, ask if they want to replay
     if argv[1] == "t":
         while True:
