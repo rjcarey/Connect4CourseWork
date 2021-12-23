@@ -678,7 +678,7 @@ class gui(ui):
         Label(frame, text="", bg='#9DE3FD').pack(fill=X)
         Button(frame, text="Back", command=self.__dismissHost, font='{Copperplate Gothic Light} 14').pack(fill=X)
 
-        message = {"from": self.__clientCode, "cmd": "hHost"}
+        message = {"from": self.__clientCode, "cmd": "gHost"}
         get_event_loop().create_task(self.__client.send(message))
         self.__waitingForJoin = True
 
@@ -701,7 +701,7 @@ class gui(ui):
     def __attemptJoin(self):
         if not self.__localInProgress and not self.__gameInProgress:
             self.__localInProgress = True
-            message = {"joinCode": self.__joinCode.get(), "from": self.__clientCode, "cmd": "hJoin"}
+            message = {"joinCode": self.__joinCode.get(), "from": self.__clientCode, "cmd": "gJoin"}
             get_event_loop().create_task(self.__client.send(message))
             self.__waitingForHost = True
 
@@ -1293,7 +1293,7 @@ class gui(ui):
                     if self.__client.canRcv():
                         message = await self.__client.recv()
                         cmd = message.get("cmd", None)
-                        if cmd == "hJoin" and message.get("joinCode", None) == self.__clientCode:
+                        if cmd == "gJoin" and message.get("joinCode", None) == self.__clientCode:
                             self.__opponent = message.get("from", None)
                             await self.__client.send({"to": self.__opponent, "from": self.__clientCode, "cmd": "match"})
                             self.__waitingForJoin = False

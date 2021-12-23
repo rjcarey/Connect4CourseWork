@@ -72,19 +72,11 @@ class game:
                 if col != game.EMPTY:
                     # Check \ diagonal
                     if colNum < 4 and rowNum < 3:
-                        counterOne = self.Board[rowNum][colNum]
-                        counterTwo = self.Board[rowNum + 1][colNum + 1]
-                        counterThree = self.Board[rowNum + 2][colNum + 2]
-                        counterFour = self.Board[rowNum + 3][colNum + 3]
-                        if counterOne == counterTwo == counterThree == counterFour:
+                        if self.Board[rowNum][colNum] == self.Board[rowNum + 1][colNum + 1] == self.Board[rowNum + 2][colNum + 2] == self.Board[rowNum + 3][colNum + 3]:
                             return col, [(rowNum, colNum), (rowNum + 1, colNum + 1), (rowNum + 2, colNum + 2), (rowNum + 3, colNum + 3)]
                     # Check / diagonal
                     if colNum > 2 and rowNum < 3:
-                        counterOne = self.Board[rowNum][colNum]
-                        counterTwo = self.Board[rowNum + 1][colNum - 1]
-                        counterThree = self.Board[rowNum + 2][colNum - 2]
-                        counterFour = self.Board[rowNum + 3][colNum - 3]
-                        if counterOne == counterTwo == counterThree == counterFour:
+                        if self.Board[rowNum][colNum] == self.Board[rowNum + 1][colNum - 1] == self.Board[rowNum + 2][colNum - 2] == self.Board[rowNum + 3][colNum - 3]:
                             return col, [(rowNum, colNum), (rowNum + 1, colNum - 1), (rowNum + 2, colNum - 2), (rowNum + 3, colNum - 3)]
         # Check for a draw
         for col in self.Board[0]:
