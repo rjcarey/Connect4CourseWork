@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, OptionMenu, Entry
+from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, OptionMenu, Entry, Scale, HORIZONTAL
 from game import game, gameError
 from time import sleep
 from players import Ai
@@ -282,6 +282,10 @@ class gui(ui):
             shapeDropDown = OptionMenu(frameMiddle, self.__shape, *shapes)
             shapeDropDown.configure(font='{Copperplate Gothic Light} 14')
             shapeDropDown.grid(row=2, column=1, sticky=W)
+            Label(frameMiddle, text="Board Size:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=3, column=0, sticky=W)
+            self.__boardSize = Scale(frameMiddle, from_=40, to=135, orient=HORIZONTAL)
+            self.__boardSize.set(120)
+            self.__boardSize.grid(row=3, column=1, sticky=W)
             frameLower = Frame(self.__root)
             frameLower.pack()
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
@@ -332,7 +336,7 @@ class gui(ui):
         for col in range(7):
             Grid.columnconfigure(frameButtons, col, weight=1)
         # Create the game board using a method that allows for an easy resize of the board
-        tile = 120
+        tile = self.__boardSize.get()
         counterSize = tile * 0.8
         boardWidth = 7 * tile
         boardHeight = 6 * tile
@@ -558,6 +562,10 @@ class gui(ui):
             shapeDropDown = OptionMenu(frameMiddle, self.__shape, *shapes)
             shapeDropDown.configure(font='{Copperplate Gothic Light} 14')
             shapeDropDown.grid(row=2, column=1, sticky=W)
+            Label(frameMiddle, text="Board Size:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=3, column=0, sticky=W)
+            self.__boardSize = Scale(frameMiddle, from_=40, to=135, orient=HORIZONTAL)
+            self.__boardSize.set(120)
+            self.__boardSize.grid(row=3, column=1, sticky=W)
             frameLower = Frame(self.__root)
             frameLower.pack()
             Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
@@ -659,13 +667,17 @@ class gui(ui):
         pTwoDropDown = OptionMenu(frameMiddle, self.__pTwo, *self.__counters.keys())
         pTwoDropDown.configure(font='{Copperplate Gothic Light} 14')
         pTwoDropDown.grid(row=2, column=1, sticky=W)
-        Label(frameMiddle, text=f"Shape:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=3, column=0, sticky=W)
+        Label(frameMiddle, text="Shape:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=3, column=0, sticky=W)
         self.__shape = StringVar()
         self.__shape.set("CIRCLE")
         shapes = ["CIRCLE", "SQUARE", "TRIANGLE"]
         shapeDropDown = OptionMenu(frameMiddle, self.__shape, *shapes)
         shapeDropDown.configure(font='{Copperplate Gothic Light} 14')
         shapeDropDown.grid(row=3, column=1, sticky=W)
+        Label(frameMiddle, text="Board Size:", bg='#9DE3FD', font='{Copperplate Gothic Light} 14').grid(row=4, column=0, sticky=W)
+        self.__boardSize = Scale(frameMiddle, from_=40, to=135, orient=HORIZONTAL)
+        self.__boardSize.set(120)
+        self.__boardSize.grid(row=4, column=1, sticky=W)
         frameLower = Frame(self.__root)
         frameLower.pack()
         Label(frameLower, text="", bg='#9DE3FD').pack(fill=X)
@@ -775,7 +787,7 @@ class gui(ui):
         for col in range(7):
             Grid.columnconfigure(frameButtons, col, weight=1)
         # Create the game board using a method that allows for an easy resize of the board
-        tile = 120
+        tile = self.__boardSize.get()
         counterSize = tile * 0.8
         boardWidth = 7 * tile
         boardHeight = 6 * tile
