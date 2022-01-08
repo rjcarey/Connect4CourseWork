@@ -4,9 +4,11 @@ from json import dumps, loads
 from websockets import connect
 
 
+# GROUP A SKILL: Complex Client-Server Model
 class client:
     def __init__(self):
         self.__uri = f"ws://{serverIP}:{serverPort}"
+        # GROUP A SKILL: Queues
         self.__txq = Queue()
         self.__rxq = Queue()
         self.__running = False

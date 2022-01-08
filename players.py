@@ -85,7 +85,7 @@ class Ai:
                 return move
 
     def __miniMax(self, depth, board, aiTurn, hardAI, col):
-        # Recursive minimax algorithm
+        # GROUP A SKILL: Recursive minimax algorithm
         depthValues = dd(lambda: 0)
         end = self.__checkTerminal(board)
         if depth == 0 or end is not None:
@@ -121,7 +121,7 @@ class Ai:
             return value
 
     def __evaluateBoard(self, board, column, easyAI):
-        # Complex user defined algorithm to evaluate a score for a possible move
+        # GROUP A SKILL: Complex user defined algorithm to evaluate a score for a possible move
         playedRow = 5
         for i, row in enumerate(board):
             if row[column] != " ":

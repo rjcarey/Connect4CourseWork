@@ -9,13 +9,15 @@ from os import urandom
 from random import randint
 
 
+# GROUP A SKILL: Complex Client-Server Model
 class server:
     def __init__(self):
         # Set of connected devices
         self.__connections = set()
         # Set of hosts
-        self.__hosts = set()
-        # Queue of messages to handle
+        self.__gHosts = set()
+        self.__tHosts = set()
+        # GROUP A SKILL: Queue of messages to handle
         self.__messageQ = Queue()
 
     async def __consumer_handler(self, websocket):
@@ -24,13 +26,31 @@ class server:
             # Handle some types of messages differently
             print(message)
             dictionary = eval(message)
-            if dictionary.get('cmd', None) == 'gHost':
-                self.__hosts.add(dictionary.get('from', None))
+            if dictionary.get('cmd', None) == 'tHost':
+                self.__tHosts.add(dictionary.get('from', None))
+                await self.__messageQ.put(message)
+            elif dictionary.get('cmd', None) == 'hostList':
+                msg = {'to': dictionary.get('from', None), 'cmd': 'hostList', 'hostList': [host for host in self.__tHosts]}
+                print(msg)
+                await self.__messageQ.put(dumps(msg))
+            elif dictionary.get('cmd', None) == 'tJoin':
+                if dictionary.get('to', None) in self.__tHosts:
+                    await self.__messageQ.put(message)
+                else:
+                    # If the join code is not valid, return a HostNotFound message
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'hnf'}
+                    print(msg)
+                    await self.__messageQ.put(dumps(msg))
+            elif dictionary.get('cmd', None) == 'acc':
+                self.__tHosts.remove(dictionary.get('from', None))
+                await self.__messageQ.put(message)
+            elif dictionary.get('cmd', None) == 'gHost':
+                self.__gHosts.add(dictionary.get('from', None))
             elif dictionary.get('cmd', None) == 'cHost':
-                self.__hosts.remove(dictionary.get('from', None))
+                self.__gHosts.remove(dictionary.get('from', None))
             elif dictionary.get('cmd', None) == 'gJoin':
-                if dictionary.get('joinCode', None) in self.__hosts:
-                    self.__hosts.remove(dictionary.get('joinCode', None))
+                if dictionary.get('joinCode', None) in self.__gHosts:
+                    self.__gHosts.remove(dictionary.get('joinCode', None))
                     await self.__messageQ.put(message)
                 else:
                     # If the join code is not valid, return a HostNotFound message

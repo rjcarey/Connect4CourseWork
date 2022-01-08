@@ -9,9 +9,11 @@ class game:
     PTWO = "⍟"
     
     def __init__(self):
+        # GROUP B SKILL: 2-Dimensional Array
         # Store the board, a 7x6 2D array, with each element starting as an 'EMPTY' space
         self.Board = [[game.EMPTY for _ in range(7)] for _ in range(6)]
         self.__Player = game.PONE
+        # GROUP A SKILL: Stack
         self.__Played = []
 
     def __repr__(self):
@@ -35,7 +37,7 @@ class game:
 
     @property
     def getRun(self):
-        # Complex user-defined algorithm to find a run of four counters, if found return the player's counter and the coordinates of the counters in the run
+        # GROUP A SKILL: Complex user-defined algorithm to find a run of four counters, if found return the player's counter and the coordinates of the counters in the run
         # Check for a horizontal run
         player = game.EMPTY
         for ir, row in enumerate(self.Board):
