@@ -29,7 +29,7 @@ class ui(ABC):
 class gui(ui):
 
     ############################################################
-    # GOOD CODING STYLE                                        #
+    # GOOD CODING STYLE:                                       #
     #   ====================================================   #
     # Use of class constants to store commonly repeated values #
     ############################################################

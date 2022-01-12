@@ -13,8 +13,13 @@ class Ai:
     def getColumn(self, board, counter):
         self.__aiCounter = counter
         self.__playerCounter = game.PONE if counter != game.PONE else game.PTWO
-        algorithms = {"Practice AI": self.__practiceAI, "Easy AI": self.__easyAI, "Medium AI": self.__mediumAI, "Hard AI": self.__hardAI}
+        ##################
+        # GROUP B SKILL: #
+        # ============   #
+        # Dictionary     #
+        ##################
         # Return the column for the AI to play in
+        algorithms = {"Practice AI": self.__practiceAI, "Easy AI": self.__easyAI, "Medium AI": self.__mediumAI, "Hard AI": self.__hardAI}
         return algorithms[self.__difficulty](board)
 
     @staticmethod
@@ -94,9 +99,11 @@ class Ai:
                 return move
 
     def __miniMax(self, depth, board, aiTurn, hardAI, col):
-        ##############################################
-        # GROUP A SKILL: Recursive minimax algorithm #
-        ##############################################
+        ###############################
+        # GROUP A SKILL:              #
+        #   =======================   #
+        # Recursive minimax algorithm #
+        ###############################
         depthValues = dd(lambda: 0)
         end = self.__checkTerminal(board)
 
@@ -137,9 +144,11 @@ class Ai:
             return value
 
     def __evaluateBoard(self, board, column, easyAI):
-        #########################################################################################
-        # GROUP A SKILL: Complex user defined algorithm to evaluate a score for a possible move #
-        #########################################################################################
+        ##########################################################################
+        # GROUP A SKILL:                                                         #
+        #   ==================================================================   #
+        # Complex user defined algorithm to evaluate a score for a possible move #
+        ##########################################################################
         playedRow = 5
         for i, row in enumerate(board):
             if row[column] != " ":
@@ -245,6 +254,11 @@ class Ai:
 
     @staticmethod
     def __nextBoards(board, counter):
+        ##################
+        # GROUP B SKILL: #
+        # ============   #
+        # Dictionary     #
+        ##################
         # Return a dictionary of board which are one move forward from the board passed in, whose keys are the move taken to get to the board
         boards = {}
         for iC, column in enumerate(board[0]):
@@ -257,7 +271,11 @@ class Ai:
 
     @staticmethod
     def __checkTerminal(board):
-        # Complex user defined algorithm to check if the passed in game is a terminal game (adaption of getRun method in game class)
+        #################################################################
+        # GROUP A SKILL:                                                #
+        #   =========================================================   #
+        # Complex user-defined algorithm adaption of getRun game method #
+        #################################################################
         # Check for horizontal run
         player = " "
         for ir, row in enumerate(board):

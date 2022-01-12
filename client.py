@@ -4,15 +4,19 @@ from json import dumps, loads
 from websockets import connect
 
 
-##############################################
-# GROUP A SKILL: Complex Client-Server Model #
-##############################################
+###############################
+# GROUP A SKILL:              #
+# =========================   #
+# Complex Client-Server Model #
+###############################
 class client:
     def __init__(self):
         self.__uri = f"ws://{serverIP}:{serverPort}"
-        #########################
-        # GROUP A SKILL: Queues #
-        #########################
+        ##################
+        # GROUP A SKILL: #
+        #   ==========   #
+        # Queues         #
+        ##################
         self.__txq = Queue()
         self.__rxq = Queue()
         self.__running = False
@@ -20,7 +24,7 @@ class client:
     def quit(self):
         self.__running = False
         ###################################################################################
-        # GROUP A SKILL                                                                   #
+        # GROUP A SKILL:                                                                  #
         #   ===========================================================================   #
         # Using JSON loads and dumps to convert python data structure to and from strings #
         ###################################################################################
@@ -30,7 +34,7 @@ class client:
     async def send(self, message):
         # Non-blocking wait to put message in the transmit queue as a string
         ###################################################################################
-        # GROUP A SKILL                                                                   #
+        # GROUP A SKILL:                                                                  #
         #   ===========================================================================   #
         # Using JSON loads and dumps to convert python data structure to and from strings #
         ###################################################################################
@@ -40,7 +44,7 @@ class client:
         # Non-blocking wait until a message is received and return it as a string
         message = await self.__rxq.get()
         ###################################################################################
-        # GROUP A SKILL                                                                   #
+        # GROUP A SKILL:                                                                  #
         #   ===========================================================================   #
         # Using JSON loads and dumps to convert python data structure to and from strings #
         ###################################################################################

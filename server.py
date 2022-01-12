@@ -16,7 +16,7 @@ from os import urandom
 class server:
 
     ############################################################
-    # GOOD CODING STYLE                                        #
+    # GOOD CODING STYLE:                                       #
     #   ====================================================   #
     # Use of class constants to store commonly repeated values #
     ############################################################
@@ -40,7 +40,7 @@ class server:
             # Wait for a message and put it in the queue when received
             # Handle some types of messages differently
             ###################################################################################
-            # GROUP A SKILL                                                                   #
+            # GROUP A SKILL:                                                                  #
             #   ===========================================================================   #
             # Using JSON loads and dumps to convert python data structure to and from strings #
             ###################################################################################
@@ -58,7 +58,7 @@ class server:
                 msg = {'to': dictionary.get('from', None), 'cmd': 'hostList', 'hostList': [host for host in self.__tHosts]}
                 print(msg)
                 ###################################################################################
-                # GROUP A SKILL                                                                   #
+                # GROUP A SKILL:                                                                  #
                 #   ===========================================================================   #
                 # Using JSON loads and dumps to convert python data structure to and from strings #
                 ###################################################################################
@@ -73,7 +73,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'hnf'}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -102,7 +102,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'hnf'}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -114,7 +114,7 @@ class server:
                 accountInfo = self.__executeSQL(sql, True)
                 # Send back a message with the account details
                 #######################################################################
-                # EXCELLENT CODING STYLE                                              #
+                # EXCELLENT CODING STYLE:                                             #
                 #   ================================================================= #
                 # Exception Handling: Try to send the first item of the returned list #
                 #######################################################################
@@ -125,7 +125,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'logIn', "accountInfo": None}
                 print(msg)
                 ###################################################################################
-                # GROUP A SKILL                                                                   #
+                # GROUP A SKILL:                                                                  #
                 #   ===========================================================================   #
                 # Using JSON loads and dumps to convert python data structure to and from strings #
                 ###################################################################################
@@ -138,7 +138,7 @@ class server:
                 hashedPassword = pbkdf2_hmac('sha256', dictionary.get('pword', None).encode('utf-8'), salt, 100000)
                 # Try to add the account to the database
                 ###########################################################
-                # EXCELLENT CODING STYLE                                  #
+                # EXCELLENT CODING STYLE:                                 #
                 #   ===================================================   #
                 # Exception Handling: Try to add the account to the table #
                 ###########################################################
@@ -149,7 +149,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": True}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -159,7 +159,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": False}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -168,7 +168,7 @@ class server:
             elif dictionary.get('cmd', None) == 'updatePFin':
                 # Update the puzzles finished stat for an account
                 ####################################################
-                # EXCELLENT CODING STYLE                           #
+                # EXCELLENT CODING STYLE:                          #
                 #   ============================================== #
                 # Exception Handling: Try to update the statistics #
                 ####################################################
@@ -179,7 +179,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": True}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -189,7 +189,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -198,7 +198,7 @@ class server:
             elif dictionary.get('cmd', None) == 'updatePMade':
                 # Update the puzzles made stat for an account
                 ####################################################
-                # EXCELLENT CODING STYLE                           #
+                # EXCELLENT CODING STYLE:                          #
                 #   ============================================   #
                 # Exception Handling: Try to update the statistics #
                 ####################################################
@@ -209,7 +209,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": True}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -219,7 +219,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -228,7 +228,7 @@ class server:
             elif dictionary.get("cmd", None) == 'updateGameStats':
                 # Update the normal game stats for an account
                 ####################################################
-                # EXCELLENT CODING STYLE                           #
+                # EXCELLENT CODING STYLE:                          #
                 #   ============================================== #
                 # Exception Handling: Try to update the statistics #
                 ####################################################
@@ -239,7 +239,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": True}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -249,7 +249,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'updateStats', "valid": False}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -261,7 +261,7 @@ class server:
                 if puzzleCode == "random":
                     # Get random puzzle info from the saved puzzles if the player chose random
                     #########################
-                    # GROUP B SKILL         #
+                    # GROUP B SKILL:        #
                     #   =================   #
                     # Non-Parameterised SQL #
                     #########################
@@ -271,7 +271,7 @@ class server:
                 puzzleInfo = self.__executeSQL(sql, True)
                 # Send back the retrieved puzzle information
                 #######################################################################
-                # EXCELLENT CODING STYLE                                              #
+                # EXCELLENT CODING STYLE:                                             #
                 #   ================================================================= #
                 # Exception Handling: Try to send the first item of the returned list #
                 #######################################################################
@@ -282,7 +282,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'loadPuzzle', "puzzleInfo": None}
                 print(msg)
                 ###################################################################################
-                # GROUP A SKILL                                                                   #
+                # GROUP A SKILL:                                                                  #
                 #   ===========================================================================   #
                 # Using JSON loads and dumps to convert python data structure to and from strings #
                 ###################################################################################
@@ -291,7 +291,7 @@ class server:
             elif dictionary.get('cmd', None) == 'savePuzzle':
                 # Try to add the game info to the database
                 #################################################################
-                # EXCELLENT CODING STYLE                                        #
+                # EXCELLENT CODING STYLE:                                       #
                 #   =========================================================   #
                 # Exception Handling: Try to ad the puzzle to the puzzles table #
                 #################################################################
@@ -302,7 +302,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'savePuzzle', "valid": True}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -312,7 +312,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'savePuzzle', "valid": False}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -323,7 +323,7 @@ class server:
                 sql = f"SELECT NAME, MOVES, OPPONENT, ACCOUNT FROM SAVES WHERE NAME == '{dictionary.get('gameName', None)}' AND ACCOUNT == '{dictionary.get('from', None)}'"
                 gameInfo = self.__executeSQL(sql, True)
                 #######################################################################
-                # EXCELLENT CODING STYLE                                              #
+                # EXCELLENT CODING STYLE:                                             #
                 #   ================================================================= #
                 # Exception Handling: Try to send the first item of the returned list #
                 #######################################################################
@@ -334,7 +334,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'loadPuzzle', "gameInfo": None}
                 print(msg)
                 ###################################################################################
-                # GROUP A SKILL                                                                   #
+                # GROUP A SKILL:                                                                  #
                 #   ===========================================================================   #
                 # Using JSON loads and dumps to convert python data structure to and from strings #
                 ###################################################################################
@@ -343,7 +343,7 @@ class server:
             elif dictionary.get('cmd', None) == 'saveGame':
                 # Try to add the game info to the database
                 ###################################################################
-                # EXCELLENT CODING STYLE                                          #
+                # EXCELLENT CODING STYLE:                                         #
                 #   ===========================================================   #
                 # Exception Handling: Try to add the game info to the saves table #
                 ###################################################################
@@ -354,7 +354,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'saveGame', "valid": True}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -364,7 +364,7 @@ class server:
                     msg = {'to': dictionary.get('from', None), 'cmd': 'saveGame', "valid": False}
                     print(msg)
                     ###################################################################################
-                    # GROUP A SKILL                                                                   #
+                    # GROUP A SKILL:                                                                  #
                     #   ===========================================================================   #
                     # Using JSON loads and dumps to convert python data structure to and from strings #
                     ###################################################################################
@@ -400,7 +400,7 @@ class server:
     def __createDatabase():
         # Create the tables used by the program if they do not already exist
         #########################
-        # GROUP B SKILL         #
+        # GROUP B SKILL:        #
         #   =================   #
         # Non-Parameterised SQL #
         #########################
@@ -442,7 +442,7 @@ class server:
     def __executeSQL(self, sql, returnFlag):
         # Try to execute the passed in sql statement
         ######################################################
-        # EXCELLENT CODING STYLE                             #
+        # EXCELLENT CODING STYLE:                            #
         #   ==============================================   #
         # Exception Handling: Try to connect to the database #
         ######################################################

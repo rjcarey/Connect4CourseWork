@@ -45,7 +45,11 @@ async def startGame():
         while True:
             choice = ""
             while choice != "y" and choice != "n":
-                # Input Exception Handling
+                ##########################################################################################
+                # EXCELLENT CODING STYLE:                                                                #
+                #   ==================================================================================   #
+                # Exception Handling: If the user enter neither 'y' nor 'n' report this without crashing #
+                ##########################################################################################
                 try:
                     choice = input("y: Play Again\nn: Quit\nEnter [y|n]: ")
                     if choice != "y" and choice != "n":

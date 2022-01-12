@@ -6,29 +6,39 @@ class StackEmptyError(Exception):
     pass
 
 
-########################
-# GROUP A SKILL: Stack #
-########################
+##################
+# GROUP A SKILL: #
+# ============   #
+# Stack          #
+##################
 class MoveStack:
     def __init__(self):
         self.__stack = []
         self.__topOfStack = -1
 
     def pop(self):
+        # Return the top item of the stack
         self.__topOfStack -= 1
         return self.__stack.pop()
 
     def push(self, item):
+        # Add the new item to the top of the stack
         self.__topOfStack += 1
         self.__stack.append(item)
 
     def peek(self):
+        # Return the top item of the stack without removing it from the stack
         if self.__topOfStack > -1:
             return self.__stack[self.__topOfStack]
         else:
             raise StackEmptyError
 
+    def empty(self):
+        # Empty the stack
+        self.__stack = []
+
     def getMoves(self):
+        # Return an ordered string of the moves stored on the stack
         moves = ""
         for move in self.__stack:
             moves += str(move[1])
@@ -38,7 +48,7 @@ class MoveStack:
 class game:
 
     ############################################################
-    # GOOD CODING STYLE                                        #
+    # GOOD CODING STYLE:                                       #
     #   ====================================================   #
     # Use of class constants to store commonly repeated values #
     ############################################################
@@ -48,15 +58,19 @@ class game:
     PTWO = "⍟"
     
     def __init__(self):
-        ######################################
-        # GROUP B SKILL: 2-Dimensional Array #
-        ######################################
+        #######################
+        # GROUP B SKILL       #
+        # =================   #
+        # 2-Dimensional Array #
+        #######################
         # Store the board, a 7x6 2D array, with each element starting as an 'EMPTY' space
         self.Board = [[game.EMPTY for _ in range(7)] for _ in range(6)]
         self.__Player = game.PONE
-        ########################
-        # GROUP A SKILL: Stack #
-        ########################
+        ##################
+        # GROUP A SKILL: #
+        #   ===========  #
+        # Stack          #
+        ##################
         self.__Played = MoveStack()
 
     def __repr__(self):
@@ -80,9 +94,11 @@ class game:
 
     @property
     def getRun(self):
-        #####################################################################################################################################################################
-        # GROUP A SKILL: Complex user-defined algorithm to find a run of four counters, if found return the player's counter and the coordinates of the counters in the run #
-        #####################################################################################################################################################################
+        ######################################################################################################################################################
+        # GROUP A SKILL:                                                                                                                                     #
+        #   ==============================================================================================================================================   #
+        # Complex user-defined algorithm to find a run of four counters, if found return the player's counter and the coordinates of the counters in the run #
+        ######################################################################################################################################################
 
         # Check for a horizontal run
         player = game.EMPTY
@@ -143,7 +159,11 @@ class game:
     def play(self, column):
         col = column - 1
         if self.Board[0][col] != game.EMPTY:
-            # If the column is full, raise an error (Exception Handling)
+            ##############################################################################
+            # EXCELLENT CODING STYLE:                                                    #
+            #   ======================================================================   #
+            # Exception Handling: If the column is full, raise an error without crashing #
+            ##############################################################################
             raise gameError("column full, play again...")
         playedRow = None
         for i, row in enumerate(reversed(self.Board)):
@@ -151,6 +171,11 @@ class game:
             if row[col] == game.EMPTY:
                 row[col] = self.__Player
                 playedRow = i
+                ##################
+                # GROUP A SKILL: #
+                #   ===========  #
+                # Stack          #
+                ##################
                 self.__Played.push((5 - playedRow, col))
                 break
         self.__Player = game.PTWO if self.__Player == game.PONE else game.PONE
@@ -158,12 +183,21 @@ class game:
 
     def undo(self):
         if self.__Played:
+            ##################
+            # GROUP A SKILL: #
+            #   ===========  #
+            # Stack          #
+            ##################
             lastRow, lastCol = self.__Played.pop()
             self.Board[lastRow][lastCol] = game.EMPTY
             self.__Player = game.PTWO if self.__Player == game.PONE else game.PONE
             return lastRow, lastCol
         else:
-            # If are no moves to undo raise an error (Exception Handling)
+            ###############################################################################
+            # EXCELLENT CODING STYLE:                                                     #
+            #   =======================================================================   #
+            # Exception Handling: If are no moves to undo raise an error without crashing #
+            ###############################################################################
             raise gameError("no moves to undo...")
 
     def load(self, moves):
@@ -173,8 +207,13 @@ class game:
 
     def loadPuzzle(self, moves):
         self.load(moves)
+        ##################
+        # GROUP A SKILL: #
+        #   ===========  #
+        # Stack          #
+        ##################
         # Reset the played moves so that the puzzle can't be undone past how it was loaded
-        self.__Played = []
+        self.__Played.empty()
 
     @property
     def getMoves(self):
