@@ -33,6 +33,7 @@ class Ai:
         for column in range(7):
             # If the column is full, avoid playing here by setting negative score
             scores[column] = -1 if board[0][column] != " " else self.__evaluateBoard(board, column, True)
+
         # Find the best scoring move and return it
         maxScore = -1
         maxIndex = []
@@ -42,6 +43,8 @@ class Ai:
                 maxIndex = [i]
             elif maxScore == score:
                 maxIndex.append(i)
+
+        # If there is more than one best move, pick the move with the highest priority
         for move in self.__priorList:
             if move in maxIndex:
                 return move
@@ -51,8 +54,10 @@ class Ai:
         boards = self.__nextBoards(board, self.__aiCounter)
         boardList = []
         moves = []
+
         for key in boards.keys():
             boardList.append((key, boards[key], self.__miniMax(3, boards[key], False, False, key)))
+
         value = -9999999
         for newBoard in boardList:
             if newBoard[2] > value:
@@ -60,6 +65,8 @@ class Ai:
                 moves = [newBoard[0]]
             elif newBoard[2] == value:
                 moves.append(newBoard[0])
+
+        # If there is more than one best move, pick the move with the highest priority
         for move in self.__priorList:
             if move in moves:
                 return move
@@ -69,8 +76,10 @@ class Ai:
         boards = self.__nextBoards(board, self.__aiCounter)
         boardList = []
         moves = []
+
         for key in boards.keys():
             boardList.append((key, boards[key], self.__miniMax(5, boards[key], False, True, key)))
+
         value = -9999999
         for newBoard in boardList:
             if newBoard[2] > value:
@@ -78,16 +87,19 @@ class Ai:
                 moves = [newBoard[0]]
             elif newBoard[2] == value:
                 moves.append(newBoard[2])
-        if len(moves) == 7:
-            return self.__easyAI(board)
+
+        # If there is more than one best move, pick the move with the highest priority
         for move in self.__priorList:
             if move in moves:
                 return move
 
     def __miniMax(self, depth, board, aiTurn, hardAI, col):
-        # GROUP A SKILL: Recursive minimax algorithm
+        ##############################################
+        # GROUP A SKILL: Recursive minimax algorithm #
+        ##############################################
         depthValues = dd(lambda: 0)
         end = self.__checkTerminal(board)
+
         if depth == 0 or end is not None:
             if end == self.__aiCounter:
                 return 1 + depth
@@ -97,6 +109,7 @@ class Ai:
                 return self.__evaluateBoard(board, col, False)
             else:
                 return 0
+
         if aiTurn:
             value = -9999999
             newBoards = self.__nextBoards(board, self.__aiCounter)
@@ -105,9 +118,11 @@ class Ai:
                 depthValues[newVal] += 1
                 if newVal > value:
                     value = newVal
+
             if len(depthValues) == 1 and hardAI:
                 value += 0.1
             return value
+
         else:
             value = 9999999
             newBoards = self.__nextBoards(board, self.__playerCounter)
@@ -116,12 +131,15 @@ class Ai:
                 depthValues[newVal] += 1
                 if newVal < value:
                     value = newVal
+
             if len(depthValues) == 1 and hardAI:
                 value -= 0.1
             return value
 
     def __evaluateBoard(self, board, column, easyAI):
-        # GROUP A SKILL: Complex user defined algorithm to evaluate a score for a possible move
+        #########################################################################################
+        # GROUP A SKILL: Complex user defined algorithm to evaluate a score for a possible move #
+        #########################################################################################
         playedRow = 5
         for i, row in enumerate(board):
             if row[column] != " ":
@@ -130,6 +148,7 @@ class Ai:
                 else:
                     playedRow = i
                 break
+
         # Set flags to determine where to search for runs
         leftOne = True if column > 0 else False
         leftTwo = True if column > 1 else False
@@ -143,8 +162,10 @@ class Ai:
         upOne = True if playedRow > 0 else False
         upTwo = True if playedRow > 1 else False
         upThree = True if playedRow > 2 else False
+
         score = 0
         currentScore = 0
+
         # Check \ diagonal
         if (upOne and leftOne) and board[playedRow - 1][column - 1] == self.__aiCounter:
             currentScore += 0.0001
@@ -166,6 +187,7 @@ class Ai:
                     return 1
         score += currentScore
         currentScore = 0
+
         # Check / diagonal
         if (downOne and leftOne) and board[playedRow + 1][column - 1] == self.__aiCounter:
             currentScore += 0.0001
@@ -187,6 +209,7 @@ class Ai:
                     return 1
         score += currentScore
         currentScore = 0
+
         # Check horizontal
         if leftOne and board[playedRow][column - 1] == self.__aiCounter:
             currentScore += 0.0001
@@ -208,6 +231,7 @@ class Ai:
                     return 1
         score += currentScore
         currentScore = 0
+
         # Check vertical
         if downOne and board[playedRow + 1][column] == self.__aiCounter:
             currentScore += 0.0001
@@ -216,6 +240,7 @@ class Ai:
                 if downThree and board[playedRow + 3][column] == self.__aiCounter:
                     return 1
         score += currentScore
+
         return score
 
     @staticmethod
@@ -245,6 +270,7 @@ class Ai:
                 else:
                     player = col
                     run = 1
+
         # Check for vertical run
         player = " "
         for column in range(7):
@@ -257,6 +283,7 @@ class Ai:
                 else:
                     player = board[row][column]
                     run = 1
+
         for rowNum, row in enumerate(board):
             for colNum, col in enumerate(row):
                 if col != " ":
@@ -268,6 +295,7 @@ class Ai:
                     if colNum > 2 and rowNum < 3:
                         if board[rowNum][colNum] == board[rowNum + 1][colNum - 1] == board[rowNum + 2][colNum - 2] == board[rowNum + 3][colNum - 3]:
                             return col
+
         # Check for a draw
         for col in board[0]:
             if col == game.EMPTY:

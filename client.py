@@ -4,27 +4,46 @@ from json import dumps, loads
 from websockets import connect
 
 
-# GROUP A SKILL: Complex Client-Server Model
+##############################################
+# GROUP A SKILL: Complex Client-Server Model #
+##############################################
 class client:
     def __init__(self):
         self.__uri = f"ws://{serverIP}:{serverPort}"
-        # GROUP A SKILL: Queues
+        #########################
+        # GROUP A SKILL: Queues #
+        #########################
         self.__txq = Queue()
         self.__rxq = Queue()
         self.__running = False
 
     def quit(self):
         self.__running = False
-        self.__txq.put_nowait(dumps("Stop"))
-        self.__rxq.put_nowait(dumps("Stop"))
+        ###################################################################################
+        # GROUP A SKILL                                                                   #
+        #   ===========================================================================   #
+        # Using JSON loads and dumps to convert python data structure to and from strings #
+        ###################################################################################
+        self.__txq.put_nowait(dumps("stop"))
+        self.__rxq.put_nowait(dumps("stop"))
 
     async def send(self, message):
         # Non-blocking wait to put message in the transmit queue as a string
+        ###################################################################################
+        # GROUP A SKILL                                                                   #
+        #   ===========================================================================   #
+        # Using JSON loads and dumps to convert python data structure to and from strings #
+        ###################################################################################
         await self.__txq.put(dumps(message))
 
     async def recv(self):
         # Non-blocking wait until a message is received and return it as a string
         message = await self.__rxq.get()
+        ###################################################################################
+        # GROUP A SKILL                                                                   #
+        #   ===========================================================================   #
+        # Using JSON loads and dumps to convert python data structure to and from strings #
+        ###################################################################################
         return loads(message)
 
     def canRcv(self):
