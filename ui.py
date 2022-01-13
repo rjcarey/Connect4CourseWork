@@ -9,7 +9,6 @@ from time import localtime, time
 from asyncio import sleep as s
 from asyncio import get_event_loop
 from hashlib import pbkdf2_hmac
-from websockets import ConnectionClosedOK
 
 
 class accountError(Exception):
@@ -26,6 +25,11 @@ class ui(ABC):
         raise NotImplementedError
 
 
+################################
+# GROUP A SKILL:               #
+# ==========================   #
+# Complex User-Defined OOP     #
+################################
 class gui(ui):
 
     ############################################################
@@ -81,9 +85,11 @@ class gui(ui):
         self.__waitingForMove = False
         self.__client = client()
         self.__clientTurn = True
-        #############################
-        # GROUP B SKILL: Dictionary #
-        #############################
+        ##################
+        # GROUP B SKILL: #
+        # ============   #
+        # Dictionary     #
+        ##################
         self.__counters = {'RED': ('#ff0000', '#ff9999'), 'YELLOW': ('#e6e600', '#ffffb3'), 'PURPLE': ('#cc00ff', '#cc99ff'), 'PINK': ('#ff33cc', '#ff99cc'), 'ORANGE': ('#ff6600', '#ffcc99'), 'BLUE': ('#0099cc', '#66ccff'), 'GREEN': ('#33cc33', '#99ff99'), 'BLACK': ('#000000', '#808080')}
         self.__pOneColour = 'RED'
         self.__pTwoColour = 'YELLOW'
@@ -382,6 +388,11 @@ class gui(ui):
         for row in range(6):
             for column in range(7):
                 space = self.__game.getSpace(row, column)
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 if space == game.PONE:
                     counterColour = self.__counters[self.__pOneColour][0]
                 elif space == game.PTWO:
@@ -402,6 +413,7 @@ class gui(ui):
         frameMenu.pack()
         self.__puzzleID = StringVar()
         self.__puzzleID.set("Set Puzzle ID")
+
         # Add more buttons/labels below the board's canvas
         if create:
             t = "PUT IN SOME COUNTERS, ENTER A PUZZLE ID THEN SAVE"
@@ -441,8 +453,17 @@ class gui(ui):
             if self.__gameConsole.size() > 3:
                 self.__gameConsole.yview_scroll(1, UNITS)
         elif not self.__puzzleOver:
-            # Exception Handling: If the column is full report the error to the user without crashing
+            ##############################################################################
+            # EXCELLENT CODING STYLE:                                                    #
+            #   ======================================================================   #
+            # Exception Handling: If the column is full, raise an error without crashing #
+            ##############################################################################
             try:
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 counter = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 row = 5 - self.__game.play(col + 1)
                 # Animate the counter being played
@@ -533,6 +554,11 @@ class gui(ui):
             if saving:
                 return column
             else:
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 counter = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 row = 5 - self.__game.play(column + 1)
                 # Animate the counter played
@@ -867,6 +893,11 @@ class gui(ui):
 
         for row in range(6):
             for column in range(7):
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 space = self.__game.getSpace(row, column)
                 if space == game.PONE:
                     counterColour = self.__counters[self.__pOneColour][0]
@@ -888,6 +919,11 @@ class gui(ui):
         frameMenu.pack()
         self.__playerTurn = StringVar()
         counter = self.__pOneColour if self.__game.getPlayer == game.PONE else self.__pTwoColour
+        ##################
+        # GROUP B SKILL: #
+        # ============   #
+        # Dictionary     #
+        ##################
         textColour = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
 
         # Add more buttons/labels below the board's canvas
@@ -988,11 +1024,20 @@ class gui(ui):
         if not self.__gameOver and self.__opponentType.get() == "Human":
             # If it is a pass and play against a human and the game isn't finished, undo the last move
             try:
-                # Exception Handling: If there is no move to undo, report this without crashing, otherwise, undo the last move
+                ################################################################################################################
+                # EXCELLENT CODING STYLE:                                                                                      #
+                #   ========================================================================================================   #
+                # Exception Handling: If there is no move to undo, report this without crashing, otherwise, undo the last move #
+                ################################################################################################################
                 row, col = self.__game.undo()
                 self.__canvas.itemconfig(self.__spaces[row][col], fill="white")
                 if not self.__puzzleInProgress:
                     counter = self.__pOneColour if self.__game.getPlayer == game.PONE else self.__pTwoColour
+                    ##################
+                    # GROUP B SKILL: #
+                    # ============   #
+                    # Dictionary     #
+                    ##################
                     textColour = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                     self.__playerTurnLabel.config(fg=textColour)
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
@@ -1025,8 +1070,17 @@ class gui(ui):
                 self.__gameConsole.yview_scroll(1, UNITS)
 
         elif not self.__game.getWinner:
-            # Exception Handling: If the column is full, report the error to the user without crashing
+            ##############################################################################
+            # EXCELLENT CODING STYLE:                                                    #
+            #   ======================================================================   #
+            # Exception Handling: If the column is full, raise an error without crashing #
+            ##############################################################################
             try:
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 counter = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 row = 5 - self.__game.play(col + 1)
 
@@ -1039,6 +1093,11 @@ class gui(ui):
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
                 counter = self.__pOneColour if self.__game.getPlayer == game.PONE else self.__pTwoColour
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 textColour = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 self.__playerTurnLabel.config(fg=textColour)
 
@@ -1070,11 +1129,21 @@ class gui(ui):
 
             if self.__opponentType.get() != "Human" and not self.__game.getWinner:
                 # If playing against an AI, play the AI's turn
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 counter = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 col = self.__opponent.getColumn(self.__game.Board, self.__game.getPlayer)
                 row = 5 - self.__game.play(col + 1)
                 self.__animatedDrop(row, col, counter)
                 self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 textColour = self.__counters[self.__pOneColour][0] if self.__game.getPlayer == game.PONE else self.__counters[self.__pTwoColour][0]
                 self.__playerTurnLabel.config(fg=textColour)
                 self.__playerTurn.set(f'YOUR TURN\nCHOOSE COLUMN')
@@ -1087,6 +1156,11 @@ class gui(ui):
             self.__gameOver = True
             if self.__game.getWinner != "Draw":
                 winner = self.__pOneColour if self.__game.getWinner == game.PONE else self.__pTwoColour
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 textColour = self.__counters[winner][0]
                 self.__playerTurnLabel.config(fg=textColour)
 
@@ -1110,6 +1184,11 @@ class gui(ui):
 
             if run:
                 # Highlight the winning run of counters
+                ##################
+                # GROUP B SKILL: #
+                # ============   #
+                # Dictionary     #
+                ##################
                 counter = self.__counters[self.__pOneColour][1] if winningPlayer == game.PONE else self.__counters[self.__pTwoColour][1]
                 for row, col in run:
                     self.__canvas.itemconfig(self.__spaces[row][col], fill=counter)
@@ -1171,7 +1250,11 @@ class gui(ui):
 
     async def runClient(self):
         if self.__network:
-            # Exception Handling: If the user cannot connect to the server, report this error without crashing and set the network flag to False
+            ######################################################################################################################################
+            # EXCELLENT CODING STYLE:                                                                                                            #
+            #   ==============================================================================================================================   #
+            # Exception Handling: If the user cannot connect to the server, report this error without crashing and set the network flag to False #
+            ######################################################################################################################################
             try:
                 await self.__client.run()
             except ConnectionRefusedError:
@@ -1447,6 +1530,11 @@ class gui(ui):
                                 self.__waitingForSaveGame = False
 
 
+################################
+# GROUP A SKILL:               #
+# ==========================   #
+# Complex User-Defined OOP     #
+################################
 class terminal(ui):
     def __init__(self, network):
         self._Game = game()
@@ -1458,7 +1546,11 @@ class terminal(ui):
         self._clientTurn = True
 
     async def runClient(self):
-        # Exception Handling: If the client cannot connect to the server, report the error and the quit the program
+        #############################################################################################################
+        # EXCELLENT CODING STYLE:                                                                                   #
+        #   =====================================================================================================   #
+        # Exception Handling: If the client cannot connect to the server, report the error and the quit the program #
+        #############################################################################################################
         try:
             await self._client.run()
         except ConnectionRefusedError:
@@ -1471,8 +1563,11 @@ class terminal(ui):
             self._name = await ainput("Enter a username: ")
             playerType = ''
             while playerType not in ['h', 'j']:
-
-                # Exception Handling: Validate the user input without crashing
+                ################################################################
+                # EXCELLENT CODING STYLE:                                      #
+                #   ========================================================   #
+                # Exception Handling: Validate the user input without crashing #
+                ################################################################
                 try:
                     playerType = await ainput("Would you like to host a game or join a game? [h|j]\n")
 
@@ -1493,7 +1588,7 @@ class terminal(ui):
                                 cmd = message.get("cmd", None)
                                 if cmd == 'hostList' and message.get("to", None) == self._name:
 
-                                    # Build a print a list of the current hosts
+                                    # Build and print a list of the current hosts
                                     hostList = message.get("hostList", None)
                                     result = 'Host list:'
                                     for host in hostList:
@@ -1555,7 +1650,7 @@ class terminal(ui):
                             cmd = message.get("cmd", None)
                             if cmd == 'hostList' and message.get("to", None) == self._name:
 
-                                # Build a print a list of the current hosts
+                                # Build and print a list of the current hosts
                                 hostList = message.get("hostList", None)
                                 result = 'Host list:'
                                 for host in hostList:
@@ -1582,7 +1677,7 @@ class terminal(ui):
                             cmd = message.get("cmd", None)
                             if cmd == 'hostList' and message.get("to", None) == self._name:
 
-                                # Build a print a list of the current hosts
+                                # Build and print a list of the current hosts
                                 hostList = message.get("hostList", None)
                                 result = 'Host list:'
                                 for host in hostList:
@@ -1602,18 +1697,29 @@ class terminal(ui):
                     print(f"{self._Game.getPlayer} to play...")
                 else:
                     print(f"Your turn...")
-
-                # Exception Handling: if the user does not enter an integer, report the error without crashing
+                ################################################################################################
+                # EXCELLENT CODING STYLE:                                                                      #
+                #   ========================================================================================   #
+                # Exception Handling: If the user does not enter an integer, report the error without crashing #
+                ################################################################################################
                 try:
                     column = await ainput("Enter column number to drop counter: ")
                     column = int(column)
                 except ValueError:
                     print("\n\n\n\nERROR: invalid input: expected integer")
                     continue
-
-                # Range check on the inputted number to make sure it is in range of the columns
+                ########################################################################################################
+                # EXCELLENT CODING STYLE:                                                                              #
+                #   ================================================================================================   #
+                # Defensive Programming: Range check on the inputted number to make sure it is in range of the columns #
+                ########################################################################################################
+                #
                 if 1 <= column <= 7:
-                    # Exception Handling: if the user tries to play in a full column, report the error without crashing
+                    #####################################################################################################
+                    # EXCELLENT CODING STYLE:                                                                           #
+                    #   =============================================================================================   #
+                    # Exception Handling: If the user tries to play in a full column, report the error without crashing #
+                    #####################################################################################################
                     try:
                         self._Game.play(column)
                     except gameError:

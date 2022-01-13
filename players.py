@@ -4,6 +4,11 @@ from copy import deepcopy
 from collections import defaultdict as dd
 
 
+################################
+# GROUP A SKILL:               #
+# ==========================   #
+# Complex User-Defined OOP     #
+################################
 class Ai:
     def __init__(self, difficulty):
         self.__difficulty = difficulty

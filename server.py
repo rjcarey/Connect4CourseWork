@@ -8,6 +8,11 @@ from hashlib import pbkdf2_hmac
 from os import urandom
 
 
+################################
+# GROUP A SKILL:               #
+# ==========================   #
+# Complex User-Defined OOP     #
+################################
 ###############################
 # GROUP A SKILL:              #
 #   =======================   #

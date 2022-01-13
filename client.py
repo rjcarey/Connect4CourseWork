@@ -4,6 +4,11 @@ from json import dumps, loads
 from websockets import connect
 
 
+################################
+# GROUP A SKILL:               #
+# ==========================   #
+# Complex User-Defined OOP     #
+################################
 ###############################
 # GROUP A SKILL:              #
 # =========================   #
