@@ -6,7 +6,7 @@ from collections import defaultdict as dd
 
 ################################
 # GROUP A SKILL:               #
-# ==========================   #
+#   ========================   #
 # Complex User-Defined OOP     #
 ################################
 class Ai:

@@ -9,30 +9,8 @@ def usage():
     quit()
 
 
-async def startGame():
-    network = False
-    ui = None
-    if len(argv) == 2:
-        if argv[1] == "t":
-            print("initialising terminal mode...\n")
-            ui = terminal(network)
-        elif argv[1] == "g":
-            print("initialising gui mode...\n")
-            ui = gui(network)
-        elif argv[1] == "tn":
-            print("initialising terminal LAN mode...\n")
-            network = True
-            ui = terminal(network)
-        elif argv[1] == "gn":
-            print("initialising gui LAN mode...\n")
-            network = True
-            ui = gui(network)
-        else:
-            # If the user didn't enter any of the above options then call the usage method
-            usage()
-    else:
-        # If the user didn't launch with the correct number of arguments then call the usage method
-        usage()
+async def startGame(network, ui):
+    ui = ui(network)
     # Create a list of tasks starting with running the ui
     tasks = [create_task(ui.run())]
     # If playing the networked version, add running the client to the list of tasks
@@ -67,4 +45,27 @@ async def startGame():
 
 
 if __name__ == "__main__":
-    run(startGame())
+    network = False
+    ui = None
+    if len(argv) == 2:
+        if argv[1] == "t":
+            print("initialising terminal mode...\n")
+            ui = terminal
+        elif argv[1] == "g":
+            print("initialising gui mode...\n")
+            ui = gui
+        elif argv[1] == "tn":
+            print("initialising terminal LAN mode...\n")
+            network = True
+            ui = terminal
+        elif argv[1] == "gn":
+            print("initialising gui LAN mode...\n")
+            network = True
+            ui = gui
+        else:
+            # If the user didn't enter any of the above options then call the usage method
+            usage()
+    else:
+        # If the user didn't launch with the correct number of arguments then call the usage method
+        usage()
+    run(startGame(network, ui))

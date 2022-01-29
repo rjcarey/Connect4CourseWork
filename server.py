@@ -10,7 +10,7 @@ from os import urandom
 
 ################################
 # GROUP A SKILL:               #
-# ==========================   #
+#   ========================   #
 # Complex User-Defined OOP     #
 ################################
 ###############################
@@ -137,38 +137,44 @@ class server:
                 await self.__messageQ.put(dumps(msg))
 
             elif dictionary.get('cmd', None) == 'addAccount':
-                # Get random salt and convert it to an integer, then get the hashed password
-                salt = urandom(4)
-                key = int.from_bytes(salt, byteorder="big")
-                hashedPassword = pbkdf2_hmac('sha256', dictionary.get('pword', None).encode('utf-8'), salt, 100000)
-                # Try to add the account to the database
-                ###########################################################
-                # EXCELLENT CODING STYLE:                                 #
-                #   ===================================================   #
-                # Exception Handling: Try to add the account to the table #
-                ###########################################################
-                try:
-                    sql = f"INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE) VALUES ('{dictionary.get('from', None)}', '{key}', '{hashedPassword}', 0, 0, 0, 0, 0, 0)"
-                    self.__executeSQL(sql, False)
-                    # Send back a message to let the client know if the insert was successful
-                    msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": True}
-                    print(msg)
-                    ###################################################################################
-                    # GROUP A SKILL:                                                                  #
-                    #   ===========================================================================   #
-                    # Using JSON loads and dumps to convert python data structure to and from strings #
-                    ###################################################################################
-                    await self.__messageQ.put(dumps(msg))
-                except IntegrityError:
-                    # If the username is not unique, return an 'invalid' message
-                    msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": False}
-                    print(msg)
-                    ###################################################################################
-                    # GROUP A SKILL:                                                                  #
-                    #   ===========================================================================   #
-                    # Using JSON loads and dumps to convert python data structure to and from strings #
-                    ###################################################################################
-                    await self.__messageQ.put(dumps(msg))
+                unsuccessful = True
+                while unsuccessful:
+                    # Get random salt and convert it to an integer, then get the hashed password
+                    salt = urandom(4)
+                    key = int.from_bytes(salt, byteorder="big")
+                    hashedPassword = pbkdf2_hmac('sha256', dictionary.get('pword', None).encode('utf-8'), salt, 100000)
+                    # Try to add the account to the database
+                    ###########################################################
+                    # EXCELLENT CODING STYLE:                                 #
+                    #   ===================================================   #
+                    # Exception Handling: Try to add the account to the table #
+                    ###########################################################
+                    try:
+                        sql = f'''INSERT INTO ACCOUNTS (USERNAME,KEY,HPWORD,SPLAYED,SWON,SLOST,SDRAWN,SPFIN,SPMADE) VALUES ('{dictionary.get('from', None)}', '{key}', "{hashedPassword}", 0, 0, 0, 0, 0, 0)'''
+                        self.__executeSQL(sql, False)
+                        # Send back a message to let the client know if the insert was successful
+                        msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": True}
+                        print(msg)
+                        unsuccessful = False
+                        ###################################################################################
+                        # GROUP A SKILL:                                                                  #
+                        #   ===========================================================================   #
+                        # Using JSON loads and dumps to convert python data structure to and from strings #
+                        ###################################################################################
+                        await self.__messageQ.put(dumps(msg))
+                    except IntegrityError:
+                        # If the username is not unique, return an 'invalid' message
+                        msg = {'to': dictionary.get('from', None), 'cmd': 'addAccount', "valid": False}
+                        print(msg)
+                        unsuccessful = False
+                        ###################################################################################
+                        # GROUP A SKILL:                                                                  #
+                        #   ===========================================================================   #
+                        # Using JSON loads and dumps to convert python data structure to and from strings #
+                        ###################################################################################
+                        await self.__messageQ.put(dumps(msg))
+                    except OperationalError:
+                        unsuccessful = True
 
             elif dictionary.get('cmd', None) == 'updatePFin':
                 # Update the puzzles finished stat for an account
@@ -333,10 +339,10 @@ class server:
                 # Exception Handling: Try to send the first item of the returned list #
                 #######################################################################
                 try:
-                    msg = {'to': dictionary.get('from', None), 'cmd': 'loadPuzzle', "gameInfo": gameInfo[0]}
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'loadGame', "gameInfo": gameInfo[0]}
                 except IndexError:
                     # If there are no records returned from the sql execution, send 'None' as puzzle
-                    msg = {'to': dictionary.get('from', None), 'cmd': 'loadPuzzle', "gameInfo": None}
+                    msg = {'to': dictionary.get('from', None), 'cmd': 'loadGame', "gameInfo": None}
                 print(msg)
                 ###################################################################################
                 # GROUP A SKILL:                                                                  #
@@ -444,8 +450,7 @@ class server:
         connection.commit()
         connection.close()
 
-    def __executeSQL(self, sql, returnFlag):
-        # Try to execute the passed in sql statement
+    def testDB(self):
         ######################################################
         # EXCELLENT CODING STYLE:                            #
         #   ==============================================   #
@@ -453,12 +458,16 @@ class server:
         ######################################################
         try:
             connection = sqlite3.connect(server.DATABASE)
-            result = connection.execute(sql)
         except OperationalError:
             # If the database file doesn't exist, create one and connect to it
             self.__createDatabase()
             connection = sqlite3.connect(server.DATABASE)
-            result = connection.execute(sql)
+        connection.close()
+
+    def __executeSQL(self, sql, returnFlag):
+        print(f"EXECUTING: {sql}")
+        connection = sqlite3.connect(server.DATABASE)
+        result = connection.execute(sql)
         connection.commit()
         # Convert the return of the sql statement into a list and, if returning something, return the list
         rows = []
@@ -478,5 +487,7 @@ class server:
 
 if __name__ == "__main__":
     server = server()
+    # Test database connection
+    server.testDB()
     # Run the server
     server.run()

@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 from tkinter import Tk, Frame, Button, X, Toplevel, N, S, E, W, Grid, Canvas, StringVar, Listbox, Label, END, UNITS, OptionMenu, Entry, Scale, HORIZONTAL
-from game import game, gameError
-from time import sleep
+from game import game, gameError, StackEmptyError
+from time import sleep, localtime, time
 from players import Ai
 from client import client
 from aioconsole import ainput
-from time import localtime, time
 from asyncio import sleep as s
 from asyncio import get_event_loop
 from hashlib import pbkdf2_hmac
@@ -27,7 +26,7 @@ class ui(ABC):
 
 ################################
 # GROUP A SKILL:               #
-# ==========================   #
+#   ========================   #
 # Complex User-Defined OOP     #
 ################################
 class gui(ui):
@@ -85,6 +84,7 @@ class gui(ui):
         self.__waitingForMove = False
         self.__client = client()
         self.__clientTurn = True
+        self.__game = None
         ##################
         # GROUP B SKILL: #
         # ============   #
@@ -162,6 +162,9 @@ class gui(ui):
 
                 self.__accountFrame = frame
             else:
+                self.__uName.set("Enter Username")
+                self.__pWord.set("Enter Password")
+                self.__confPWord.set("Confirm Password")
                 self.__accountFrame.pack()
             self.__quitFrame.pack()
             self.__toUnpack.append(self.__accountFrame)
@@ -330,7 +333,6 @@ class gui(ui):
             console.pack()
 
             self.__puzzleSetupConsole = console
-            self.__puzzleSetupConsole.insert(END, f"1| enter ID to load")
             self.__puzzleUpper = frameUpper
             self.__puzzleMiddle = frameMiddle
             self.__puzzleLower = frameLower
@@ -569,6 +571,7 @@ class gui(ui):
                 self.__puzzleOver = True
 
     def __exitPuzzle(self):
+        self.__game = None
         self.__puzzleInProgress = False
         self.__unPack()
         self.__gameTypeFrame.pack()
@@ -860,7 +863,7 @@ class gui(ui):
 
     def __play(self):
         self.__unPack()
-        if not self.__setupCreated:
+        if self.__game is None:
             self.__game = game()
         if self.__opponentType.get() != "Human":
             self.__opponent = Ai(self.__opponentType.get())
@@ -1043,8 +1046,8 @@ class gui(ui):
                     self.__playerTurn.set(f'{counter} TO PLAY\nCHOOSE COLUMN')
                 else:
                     self.__puzzleOver = False
-            except gameError as e:
-                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| {e}")
+            except StackEmptyError:
+                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| nothing to undo...")
                 if self.__gameConsole.size() > 3:
                     self.__gameConsole.yview_scroll(1, UNITS)
 
@@ -1054,13 +1057,14 @@ class gui(ui):
                 self.__gameConsole.yview_scroll(1, UNITS)
 
     def __attemptPlay(self, col):
-        if self.__clientTurn:
-            # If it is not the clients turn (it is opponents turn on networked game) tell the user to wait
-            self.__playMove(col)
-        else:
-            self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
-            if self.__gameConsole.size() > 3:
-                self.__gameConsole.yview_scroll(1, UNITS)
+        if not self.__gameOver:
+            if self.__clientTurn:
+                # If it is not the clients turn (it is opponents turn on networked game) tell the user to wait
+                self.__playMove(col)
+            else:
+                self.__gameConsole.insert(END, f"{self.__gameConsole.size() + 1}| please wait...")
+                if self.__gameConsole.size() > 3:
+                    self.__gameConsole.yview_scroll(1, UNITS)
 
     def __playMove(self, col):
         if self.__animating:
@@ -1168,10 +1172,10 @@ class gui(ui):
                 if self.__opponentType.get() == "Human" and not self.__localGame:
                     self.__playerTurn.set(f'{winner} HAS WON\nCONGRATULATIONS!')
                 elif not self.__localGame:
-                    winner = 'YOU' if self.__game.getWinner == game.PONE else 'OPPONENT'
-                    self.__playerTurn.set(f'{winner} WON\nGOOD GAME!')
+                    winner = 'WIN' if self.__game.getWinner == game.PONE else 'LOSE'
+                    self.__playerTurn.set(f'YOU {winner} \nGOOD GAME!')
                 else:
-                    winner = 'YOU' if self.__game.getWinner == game.PONE and self.__firstTurn.get() == self.__username.get() else 'OPPONENT'
+                    winner = 'YOU' if self.__game.getWinner == game.PONE and (self.__firstTurn.get() == self.__username.get() or self.__firstTurn.get() == self.__clientCode) else 'OPPONENT'
                     self.__playerTurn.set(f'{winner} WON\nGOOD GAME!')
 
             else:
@@ -1230,6 +1234,7 @@ class gui(ui):
             self.__localGame = False
             self.__clientTurn = True
 
+        self.__game = None
         self.__unPack()
         self.__gameTypeFrame.pack()
         self.__toUnpack.append(self.__gameTypeFrame)
@@ -1289,6 +1294,8 @@ class gui(ui):
                                 self.__waitingForMove = False
                                 if not self.__guest:
                                     self.__firstTurn.set(self.__username.get())
+                                else:
+                                    self.__firstTurn.set(self.__clientCode)
                             else:
                                 self.__clientTurn = False
                                 self.__waitingForMove = True
@@ -1490,7 +1497,6 @@ class gui(ui):
                         message = await self.__client.recv()
                         cmd = message.get("cmd", None)
                         if cmd == "loadGame" and message.get("to", None) == self.__username.get():
-
                             if message.get("gameInfo", None) is not None:
                                 # If the game name successfully retrieves game information, load the game
                                 name, moves, opponent, account = message.get("gameInfo", None)
@@ -1532,7 +1538,7 @@ class gui(ui):
 
 ################################
 # GROUP A SKILL:               #
-# ==========================   #
+#   ========================   #
 # Complex User-Defined OOP     #
 ################################
 class terminal(ui):
@@ -1544,6 +1550,11 @@ class terminal(ui):
         self._opponent = ""
         self._hosting = False
         self._clientTurn = True
+        self._running = True
+
+    def _quit(self):
+        self._client.quit()
+        self._running = False
 
     async def runClient(self):
         #############################################################################################################
@@ -1558,25 +1569,88 @@ class terminal(ui):
             quit()
 
     async def run(self):
-        if self._network:
-            self._client = client()
-            self._name = await ainput("Enter a username: ")
-            playerType = ''
-            while playerType not in ['h', 'j']:
-                ################################################################
-                # EXCELLENT CODING STYLE:                                      #
-                #   ========================================================   #
-                # Exception Handling: Validate the user input without crashing #
-                ################################################################
-                try:
-                    playerType = await ainput("Would you like to host a game or join a game? [h|j]\n")
+        while self._running:
+            if self._network:
+                self._client = client()
+                self._name = await ainput("Enter a username: ")
+                playerType = ''
+                while playerType not in ['h', 'j']:
+                    ################################################################
+                    # EXCELLENT CODING STYLE:                                      #
+                    #   ========================================================   #
+                    # Exception Handling: Validate the user input without crashing #
+                    ################################################################
+                    try:
+                        playerType = await ainput("Would you like to host a game or join a game? [h|j]\n")
 
-                    if playerType == 'h':
-                        # If hosting, send a host command to the server so the server can add this user to the host set
-                        await self._client.send({"from": self._name, "cmd": "tHost"})
-                        self._hosting = True
+                        if playerType == 'h':
+                            # If hosting, send a host command to the server so the server can add this user to the host set
+                            await self._client.send({"from": self._name, "cmd": "tHost"})
+                            self._hosting = True
 
-                    elif playerType == 'j':
+                        elif playerType == 'j':
+                            hostName = ""
+                            while hostName == "":
+                                waitingForHostList = True
+                                while waitingForHostList:
+
+                                    # Send a request to the server for the list of hosts
+                                    await self._client.send({"from": self._name, "cmd": "hostList"})
+                                    message = await self._client.recv()
+                                    cmd = message.get("cmd", None)
+                                    if cmd == 'hostList' and message.get("to", None) == self._name:
+
+                                        # Build and print a list of the current hosts
+                                        hostList = message.get("hostList", None)
+                                        result = 'Host list:'
+                                        for host in hostList:
+                                            result += host + ', '
+                                        print(result[:-2])
+                                        waitingForHostList = False
+
+                                hostName = await ainput("Enter the host's username or enter nothing to refresh the host list: ")
+
+                                if hostName != "":
+                                    # If the host name is valid, send a join request to the server, to be forwarded to the host
+                                    await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
+
+                        else:
+                            raise hostError
+
+                    except hostError:
+                        print("incorrect input, please enter 'h' or 'j'")
+
+                while not self._opponent:
+                    # While the user does not have an opponent, wait for a message from the server
+                    message = await self._client.recv()
+                    cmd = message.get("cmd", None)
+
+                    if cmd == "tHost" and playerType == 'h':
+                        print(f'{message.get("from", None)} is hosting...')
+
+                    elif cmd == "tJoin" and message.get("to", None) == self._name and self._hosting and not self._opponent:
+                        accepted = ""
+                        while accepted != "y" and accepted != "n":
+                            # If the match is accepted set opponent to the sender and send positive response to the opponent otherwise don't store the opponent and send negative response
+
+                            accepted = await ainput(f'Accept match from {message.get("from", None)}? [y|n]\n')
+                            if accepted == "y":
+                                await self._client.send({"from": self._name, "to": message.get("from", None), "cmd": "acc"})
+                                self._opponent = message.get("from", None)
+                            elif accepted == "n":
+                                await self._client.send({"to": message.get("from", None), "from": self._name, "cmd": "rej"})
+                            else:
+                                print("invalid input")
+
+                    elif cmd == "acc" and self._name == message.get("to", None) and playerType == 'j':
+                        # If the joiner receives an accept message, set the opponent and notify the user
+                        print("match request accepted")
+                        self._clientTurn = False
+                        self._opponent = message.get("from", None)
+
+                    elif cmd == "rej" and self._name == message.get("to", None):
+                        # If the joiner receives a reject message, notify the user and ask them for a new host username
+                        print("match request rejected")
                         hostName = ""
                         while hostName == "":
                             waitingForHostList = True
@@ -1597,167 +1671,109 @@ class terminal(ui):
                                     waitingForHostList = False
 
                             hostName = await ainput("Enter the host's username or enter nothing to refresh the host list: ")
-
                             if hostName != "":
                                 # If the host name is valid, send a join request to the server, to be forwarded to the host
                                 await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
 
+                    elif cmd == "hnf" and self._name == message.get("to", None):
+                        # If the host name is not in the server's host set, notify the user
+                        print("host not found")
+                        hostName = ""
+                        while hostName == "":
+                            waitingForHostList = True
+                            while waitingForHostList:
+
+                                # Send a request to the server for the list of hosts
+                                await self._client.send({"from": self._name, "cmd": "hostList"})
+                                message = await self._client.recv()
+                                cmd = message.get("cmd", None)
+                                if cmd == 'hostList' and message.get("to", None) == self._name:
+
+                                    # Build and print a list of the current hosts
+                                    hostList = message.get("hostList", None)
+                                    result = 'Host list:'
+                                    for host in hostList:
+                                        result += host + ', '
+                                    print(result[:-2])
+                                    waitingForHostList = False
+
+                            hostName = await ainput("Enter the host's username or enter nothing to refresh the host list: ")
+                            if hostName != "":
+                                # If the host name is valid, send a join request to the server, to be forwarded to the host
+                                await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
+
+            while not self._Game.getWinner:
+                print(self._Game)
+                if self._clientTurn:
+                    if not self._client:
+                        print(f"{self._Game.getPlayer} to play...")
                     else:
-                        raise hostError
-
-                except hostError:
-                    print("incorrect input, please enter 'h' or 'j'")
-
-            while not self._opponent:
-                # While the user does not have an opponent, wait for a message from the server
-                message = await self._client.recv()
-                cmd = message.get("cmd", None)
-
-                if cmd == "tHost" and playerType == 'h':
-                    print(f'{message.get("from", None)} is hosting...')
-
-                elif cmd == "tJoin" and message.get("to", None) == self._name and self._hosting and not self._opponent:
-                    accepted = ""
-                    while accepted != "y" and accepted != "n":
-                        # If the match is accepted set opponent to the sender and send positive response to the opponent otherwise don't store the opponent and send negative response
-
-                        accepted = await ainput(f'Accept match from {message.get("from", None)}? [y|n]\n')
-                        if accepted == "y":
-                            await self._client.send({"from": self._name, "to": message.get("from", None), "cmd": "acc"})
-                            self._opponent = message.get("from", None)
-                        elif accepted == "n":
-                            await self._client.send({"to": message.get("from", None), "from": self._name, "cmd": "rej"})
+                        print(f"Your turn...")
+                    while True:
+                        ################################################################################################
+                        # EXCELLENT CODING STYLE:                                                                      #
+                        #   ========================================================================================   #
+                        # Exception Handling: If the user does not enter an integer, report the error without crashing #
+                        ################################################################################################
+                        try:
+                            column = await ainput("Enter column number to drop counter: ")
+                            column = int(column)
+                        except ValueError:
+                            print("\n\n\n\nERROR: invalid input: expected integer")
+                            continue
+                        ########################################################################################################
+                        # EXCELLENT CODING STYLE:                                                                              #
+                        #   ================================================================================================   #
+                        # Defensive Programming: Range check on the inputted number to make sure it is in range of the columns #
+                        ########################################################################################################
+                        #
+                        if 1 <= column <= 7:
+                            #####################################################################################################
+                            # EXCELLENT CODING STYLE:                                                                           #
+                            #   =============================================================================================   #
+                            # Exception Handling: If the user tries to play in a full column, report the error without crashing #
+                            #####################################################################################################
+                            try:
+                                self._Game.play(column)
+                                break
+                            except gameError:
+                                print("\n\n\n\nERROR: column full")
                         else:
-                            print("invalid input")
+                            print("\n\n\n\nERROR: input must be between 1 and 7 inclusive")
 
-                elif cmd == "acc" and self._name == message.get("to", None) and playerType == 'j':
-                    # If the joiner receives an accept message, set the opponent and notify the user
-                    print("match request accepted")
-                    self._clientTurn = False
-                    self._opponent = message.get("from", None)
+                    if self._client:
+                        # If playing a networked game, send a message to the server with the move command, the column played in and the opponent's name
+                        await self._client.send({"from": self._name, "to": self._opponent, "cmd": "move", "col": column})
 
-                elif cmd == "rej" and self._name == message.get("to", None):
-                    # If the joiner receives a reject message, notify the user and ask them for a new host username
-                    print("match request rejected")
-                    hostName = ""
-                    while hostName == "":
-                        waitingForHostList = True
-                        while waitingForHostList:
-
-                            # Send a request to the server for the list of hosts
-                            await self._client.send({"from": self._name, "cmd": "hostList"})
-                            message = await self._client.recv()
-                            cmd = message.get("cmd", None)
-                            if cmd == 'hostList' and message.get("to", None) == self._name:
-
-                                # Build and print a list of the current hosts
-                                hostList = message.get("hostList", None)
-                                result = 'Host list:'
-                                for host in hostList:
-                                    result += host + ', '
-                                print(result[:-2])
-                                waitingForHostList = False
-
-                        hostName = await ainput("Enter the host's username or enter nothing to refresh the host list: ")
-                        if hostName != "":
-                            # If the host name is valid, send a join request to the server, to be forwarded to the host
-                            await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
-
-                elif cmd == "hnf" and self._name == message.get("to", None):
-                    # If the host name is not in the server's host set, notify the user
-                    print("host not found")
-                    hostName = ""
-                    while hostName == "":
-                        waitingForHostList = True
-                        while waitingForHostList:
-
-                            # Send a request to the server for the list of hosts
-                            await self._client.send({"from": self._name, "cmd": "hostList"})
-                            message = await self._client.recv()
-                            cmd = message.get("cmd", None)
-                            if cmd == 'hostList' and message.get("to", None) == self._name:
-
-                                # Build and print a list of the current hosts
-                                hostList = message.get("hostList", None)
-                                result = 'Host list:'
-                                for host in hostList:
-                                    result += host + ', '
-                                print(result[:-2])
-                                waitingForHostList = False
-
-                        hostName = await ainput("Enter the host's username or enter nothing to refresh the host list: ")
-                        if hostName != "":
-                            # If the host name is valid, send a join request to the server, to be forwarded to the host
-                            await self._client.send({"from": self._name, "to": hostName, "cmd": "tJoin"})
-
-        while not self._Game.getWinner:
-            print(self._Game)
-            if self._clientTurn:
-                if not self._client:
-                    print(f"{self._Game.getPlayer} to play...")
                 else:
-                    print(f"Your turn...")
-                ################################################################################################
-                # EXCELLENT CODING STYLE:                                                                      #
-                #   ========================================================================================   #
-                # Exception Handling: If the user does not enter an integer, report the error without crashing #
-                ################################################################################################
-                try:
-                    column = await ainput("Enter column number to drop counter: ")
-                    column = int(column)
-                except ValueError:
-                    print("\n\n\n\nERROR: invalid input: expected integer")
-                    continue
-                ########################################################################################################
-                # EXCELLENT CODING STYLE:                                                                              #
-                #   ================================================================================================   #
-                # Defensive Programming: Range check on the inputted number to make sure it is in range of the columns #
-                ########################################################################################################
-                #
-                if 1 <= column <= 7:
-                    #####################################################################################################
-                    # EXCELLENT CODING STYLE:                                                                           #
-                    #   =============================================================================================   #
-                    # Exception Handling: If the user tries to play in a full column, report the error without crashing #
-                    #####################################################################################################
-                    try:
-                        self._Game.play(column)
-                    except gameError:
-                        print("\n\n\n\nERROR: column full")
-                else:
-                    print("\n\n\n\nERROR: input must be between 1 and 7 inclusive")
+                    # If it is not the clients turn, wait for a move to be sent from the opponent, and then play the move
+                    print(f"{self._opponent}'s turn, please wait...")
+                    col = -1
+                    while col == -1:
+                        message = await self._client.recv()
+                        cmd = message.get("cmd", None)
+                        if cmd == "move" and message.get("to", None) == self._name:
+                            # If the client receives a move message addressed to itself, play the move sent with the message
+                            col = message.get("col", -1)
+                            self._Game.play(col)
 
                 if self._client:
-                    # If playing a networked game, send a message to the server with the move command, the column played in and the opponent's name
-                    await self._client.send({"from": self._name, "to": self._opponent, "cmd": "move", "col": column})
+                    self._clientTurn = True if not self._clientTurn else False
+
+            # When the game has finished, get the end game information and display it
+            print(self._Game)
+            winner = self._Game.getWinner
+
+            if winner == "Draw":
+                print("The game was a draw!")
 
             else:
-                # If it is not the clients turn, wait for a move to be sent from the opponent, and then play the move
-                print(f"{self._opponent}'s turn, please wait...")
-                col = -1
-                while col == -1:
-                    message = await self._client.recv()
-                    cmd = message.get("cmd", None)
-                    if cmd == "move" and message.get("to", None) == self._name:
-                        # If the client receives a move message addressed to itself, play the move sent with the message
-                        self._Game.play(message.get("col", -1))
+                if not self._client:
+                    print(f"{winner} has won, well played!")
 
-            if self._client:
-                self._clientTurn = True if not self._clientTurn else False
-
-        # When the game has finished, get the end game information and display it
-        print(self._Game)
-        winner = self._Game.getWinner
-
-        if winner == "Draw":
-            print("The game was a draw!")
-
-        else:
-            if not self._client:
-                print(f"{winner} has won, well played!")
-
-            else:
-                if self._clientTurn:
-                    print("You lost!")
                 else:
-                    print("You won!")
+                    if self._clientTurn:
+                        print("You lost!")
+                    else:
+                        print("You won!")
+            self._quit()

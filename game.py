@@ -8,7 +8,7 @@ class StackEmptyError(Exception):
 
 ################################
 # GROUP A SKILL:               #
-# ==========================   #
+#   ========================   #
 # Complex User-Defined OOP     #
 ################################
 ##################
@@ -23,8 +23,11 @@ class MoveStack:
 
     def pop(self):
         # Return the top item of the stack
-        self.__topOfStack -= 1
-        return self.__stack.pop()
+        if self.__topOfStack > -1:
+            self.__topOfStack -= 1
+            return self.__stack.pop()
+        else:
+            raise StackEmptyError
 
     def push(self, item):
         # Add the new item to the top of the stack
@@ -52,7 +55,7 @@ class MoveStack:
 
 ################################
 # GROUP A SKILL:               #
-# ==========================   #
+#   ========================   #
 # Complex User-Defined OOP     #
 ################################
 class game:
@@ -192,23 +195,15 @@ class game:
         return playedRow
 
     def undo(self):
-        if self.__Played:
-            ##################
-            # GROUP A SKILL: #
-            #   ===========  #
-            # Stack          #
-            ##################
-            lastRow, lastCol = self.__Played.pop()
-            self.Board[lastRow][lastCol] = game.EMPTY
-            self.__Player = game.PTWO if self.__Player == game.PONE else game.PONE
-            return lastRow, lastCol
-        else:
-            ###############################################################################
-            # EXCELLENT CODING STYLE:                                                     #
-            #   =======================================================================   #
-            # Exception Handling: If are no moves to undo raise an error without crashing #
-            ###############################################################################
-            raise gameError("no moves to undo...")
+        ##################
+        # GROUP A SKILL: #
+        #   ===========  #
+        # Stack          #
+        ##################
+        lastRow, lastCol = self.__Played.pop()
+        self.Board[lastRow][lastCol] = game.EMPTY
+        self.__Player = game.PTWO if self.__Player == game.PONE else game.PONE
+        return lastRow, lastCol
 
     def load(self, moves):
         # Play all the stored moves in order
