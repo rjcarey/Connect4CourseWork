@@ -174,6 +174,7 @@ class server:
                         ###################################################################################
                         await self.__messageQ.put(dumps(msg))
                     except OperationalError:
+                        # If the hash causes an error, e.g. it contains a ' or a ", redo the hash with a new randomly generated salt
                         unsuccessful = True
 
             elif dictionary.get('cmd', None) == 'updatePFin':
@@ -408,7 +409,7 @@ class server:
             self.__connections.remove(websocket)
 
     @staticmethod
-    def __createDatabase():
+    def createDatabase():
         # Create the tables used by the program if they do not already exist
         #########################
         # GROUP B SKILL:        #
@@ -449,22 +450,10 @@ class server:
         connection.execute(sql)
         connection.commit()
         connection.close()
+        print("tables created...")
 
-    def testDB(self):
-        ######################################################
-        # EXCELLENT CODING STYLE:                            #
-        #   ==============================================   #
-        # Exception Handling: Try to connect to the database #
-        ######################################################
-        try:
-            connection = sqlite3.connect(server.DATABASE)
-        except OperationalError:
-            # If the database file doesn't exist, create one and connect to it
-            self.__createDatabase()
-            connection = sqlite3.connect(server.DATABASE)
-        connection.close()
-
-    def __executeSQL(self, sql, returnFlag):
+    @staticmethod
+    def __executeSQL(sql, returnFlag):
         print(f"EXECUTING: {sql}")
         connection = sqlite3.connect(server.DATABASE)
         result = connection.execute(sql)
@@ -488,6 +477,6 @@ class server:
 if __name__ == "__main__":
     server = server()
     # Test database connection
-    server.testDB()
+    server.createDatabase()
     # Run the server
     server.run()
